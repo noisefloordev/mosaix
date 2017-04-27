@@ -2,3 +2,6 @@ Library
 Temp
 obj
 .vs
+*.sln
+*.userprefs
+*.csproj
