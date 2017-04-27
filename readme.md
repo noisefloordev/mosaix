@@ -21,17 +21,28 @@ objects are mosaiced, but the outline is still visible.
 
 ![](Images/separate_mosaics.png)
 
-Mosaic masks
-------------
+Texture masks
+-------------
 
-A cylinder can be used to mask which part of the object you want to mosaic.  For
-example, this can be used to mosaic only a game character's eyes.
+A texture can be used to define which parts of an object should be mosaiced.
+This allows precise control over what gets blurred.
+
+Below, the spout of the teapot has been painted white in the mask texture, so
+only that part of the model is blurred.
+
+![](Images/texture_masked.png)
+
+Spherical mosaic masks
+----------------------
+
+Alternatively, a cylinder can be used to mask which part of the object you want to mosaic.
+For example, this can be used to mosaic only a game character's eyes.
 
 The left side shows the mask cylinder.  The right shows the result: just the handle
 of the teapot is blurred.  The cylinder can be scaled to fit the desired shape,
 and parented to the object or a character's skeleton so it follows the object.
 
-![](Images/mask.png)
+![](Images/sphere_masked.png)
 
 Usage
 -----
@@ -65,8 +76,17 @@ for masking and alpha.
 **Alpha** Fade out the mosaic.  This can be animated to transition the mosaic on and off
 smoothly.
 
-Masking
--------
+Texture masking
+---------------
+
+To mask with a texture, select "Texture" as the masking mode, and connect a texture
+to Masking Texture.  White areas in the mask will be blurred and black ones won't.
+
+This only works well if the masking layer only contains a single object, since this
+only uses a single texture, but allows fine control over blurring.
+
+Sphere masking
+--------------
 
 To mask the mosaic, select "Sphere" as the masking mode, create a 3D sphere and connect
 it to Masking Sphere.  Place the sphere, and parent it correctly so it follows the object
