@@ -12,7 +12,7 @@ public class MosaixEditor: Editor
         Mosaix obj = (Mosaix) target;
         
         EditorGUILayout.LabelField("Basic settings", EditorStyles.boldLabel);
-        obj.MosaicLayer = EditorGUILayout.LayerField("Layer Name", obj.MosaicLayer);
+        obj.MosaicLayer = EditorGUILayout.LayerField("Mosaic Layer", obj.MosaicLayer);
         obj.MosaicBlocks = EditorGUILayout.IntSlider("Mosaic Blocks", obj.MosaicBlocks, 1, 100);
         
         EditorGUILayout.LabelField("Masking", EditorStyles.boldLabel);

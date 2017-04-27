@@ -56,7 +56,7 @@ it something like "Mosaic".
 be in the layer.
 ![](Images/Setup_PutMeshInLayer.png)
 - Attach Mosaix\Scripts\Mosaix.cs to your camera.
-- Set "Layer Name" to the layer you created above, eg. "Mosaic".
+- Set "Mosaic Layer" to the layer you created above.
 - Connect shaders:
   * Mosaix\Shaders\Mosaic.shader -> "Mosaic Shader"
   * Mosaix\Shaders\ExpandEdges.shader -> "Expand Edges Shader"
