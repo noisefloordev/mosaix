@@ -27,10 +27,9 @@ Mosaic masks
 A cylinder can be used to mask which part of the object you want to mosaic.  For
 example, this can be used to mosaic only a game character's eyes.
 
-On the left, only the handle of the teapot is mosaiced.  On the right, the mask
-cylinder is visible for editing.  The cylinder can be scaled to fit the desired
-shape, and parented to the object or a character's skeleton so it follows the
-object.
+The left side shows the mask cylinder.  The right shows the result: just the handle
+of the teapot is blurred.  The cylinder can be scaled to fit the desired shape,
+and parented to the object or a character's skeleton so it follows the object.
 
 ![](Images/mask.png)
 
