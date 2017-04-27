@@ -51,6 +51,8 @@ public class Mosaix: MonoBehaviour
 
     public MaskMode MaskingMode;
 
+    // MaskMode.Sphere only:
+
     // A sphere to define where to mosaic.  This sphere can be scaled, stretched and rotated
     // to adjust the shape of the mosaic.
     public GameObject MaskingSphere;
@@ -59,14 +61,18 @@ public class Mosaix: MonoBehaviour
     // At 1, we fade for the same size as MaskingSphere: if it's 10 world units, the fade ends
     // 20 world units away.
     public float MaskFade = 0.1f;
+
+    // MaskMode.Texture only:
     public Texture MaskingTexture;
 
     // This shader copies the outermost edge of opaque pixels outwards.
     public Shader ExpandEdgesShader;
 
-    // A surface shader that samples our low-resolution mosaic texture in screen space.
+    // This shader samples our low-resolution mosaic texture in screen space.
     public Shader MosaicShader;
 
+    // The premultiply shader takes a regular texture and convert it to a premultiplied one.  This
+    // allows for much higher-quality downscaling, without bleeding black from empty pixels.
     public Shader PremultiplyShader;
 
     // The real camera on the object this script is attached to.
