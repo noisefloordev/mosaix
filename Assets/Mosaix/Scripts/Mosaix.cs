@@ -16,17 +16,13 @@ using System.Collections.Generic;
 public class Mosaix: MonoBehaviour
 {
     // The render layer for objects to mosaic.
-    [Header("Basic settings")]
-    public string LayerName;
+    public int MosaicLayer;
 
     // The minimum number of mosaic blocks we want.  This will be adjusted upwards to keep the
     // blocks square.
-    [RangeAttribute(1,100)]
     public int MosaicBlocks = 16;
     
     // If the expand pass doesn't fill the layer, this is the fallback color that will be visible.
-    [Header("Advanced settings")]
-    [ColorUsageAttribute(false)] // hide alpha
     public Color DefaultColor = new Color(0,0,0,1);
 
     // If true, we'll render the mosaic texture with other objects casting shadows.  Turning this off may
@@ -44,7 +40,6 @@ public class Mosaix: MonoBehaviour
     // If false, we'll render directly at the lower resolution, which is faster.
     public bool HighResolutionRender = true;
 
-    [RangeAttribute(0,1)]
     public float Alpha = 1;
 
     public enum MaskMode
@@ -54,7 +49,6 @@ public class Mosaix: MonoBehaviour
         Texture,
     };
 
-    [Header("Masking")]
     public MaskMode MaskingMode;
 
     // A sphere to define where to mosaic.  This sphere can be scaled, stretched and rotated
@@ -64,12 +58,10 @@ public class Mosaix: MonoBehaviour
     // How far to fade the mosaic out around MaskingSphere.  At 0, the mosaic cuts off sharply.
     // At 1, we fade for the same size as MaskingSphere: if it's 10 world units, the fade ends
     // 20 world units away.
-    [RangeAttribute(0,1)]
     public float MaskFade = 0.1f;
     public Texture MaskingTexture;
 
     // This shader copies the outermost edge of opaque pixels outwards.
-    [Header("Internal")]
     public Shader ExpandEdgesShader;
 
     // A surface shader that samples our low-resolution mosaic texture in screen space.
@@ -115,7 +107,7 @@ public class Mosaix: MonoBehaviour
 
         // Dynamically create a camera to render with.  We'll make this a child of this camera to keep
         // it from cluttering the scene, but this doesn't really matter.
-        GameObject MosaicCameraGameObject = new GameObject("Mosaic camera (" + LayerName + ")");
+        GameObject MosaicCameraGameObject = new GameObject("Mosaic camera (" + LayerMask.LayerToName(MosaicLayer) + ")");
         MosaicCameraGameObject.transform.SetParent(this.transform);
         MosaicCamera = MosaicCameraGameObject.AddComponent<Camera>();
 
@@ -279,7 +271,7 @@ public class Mosaix: MonoBehaviour
         Dictionary<Renderer,ShadowCastingMode> DisabledRenderers = new Dictionary<Renderer,ShadowCastingMode>();
         if(ShadowsCastOnMosaic)
         {
-            List<GameObject> NonMosaicObjects = FindGameObjectsInLayer(LayerMask.NameToLayer(LayerName), true);
+            List<GameObject> NonMosaicObjects = FindGameObjectsInLayer(MosaicLayer, true);
             foreach(GameObject go in NonMosaicObjects)
             {
                 Renderer r = go.GetComponent<Renderer>();
@@ -290,7 +282,7 @@ public class Mosaix: MonoBehaviour
                 r.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
             }
         } else {
-            MosaicCamera.cullingMask =  (1 << LayerMask.NameToLayer(LayerName));
+            MosaicCamera.cullingMask =  (1 << MosaicLayer);
         }
 
         // Match the projection matrix to the main camera, so we render the same thing even though
@@ -402,7 +394,7 @@ public class Mosaix: MonoBehaviour
         // Find the objects that we're mosaicing, and switch them to the mosaic shader, which
         // will sample the prerendered texture we just made.  This will happen during regular
         // rendering.
-        List<GameObject> MosaicObjects = FindGameObjectsInLayer(LayerMask.NameToLayer(LayerName));
+        List<GameObject> MosaicObjects = FindGameObjectsInLayer(MosaicLayer);
       
         foreach(GameObject go in MosaicObjects)
         {
