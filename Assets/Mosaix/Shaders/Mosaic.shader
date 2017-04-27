@@ -16,17 +16,18 @@ SubShader {
         #pragma fragment frag
         #pragma target 3.0
         #pragma multi_compile __ FADING
-        #pragma multi_compile __ MASKING
+        #pragma multi_compile __ TEXTURE_MASKING SPHERE_MASKING
 
         #include "UnityCG.cginc"
 
         struct appdata_t {
             float4 vertex : POSITION;
-            float2 texcoord : TEXCOORD0;
+            float2 uv : TEXCOORD0;
         };
 
         struct v2f {
             float3 world : TEXCOORD;
+            float2 uv : TEXCOORD1;
             // float4 screenPos : SCREENPOS;
         };
 
@@ -35,6 +36,12 @@ SubShader {
 
 #if FADING
         sampler2D HighResTex;
+
+//#if MASKING
+        sampler2D MaskTex;
+//#else
+//#endif
+
         float4x4 MaskMatrix;
         float Alpha;
         float MaskSizeOuter;
@@ -46,6 +53,7 @@ SubShader {
             v2f o;
             vertex = UnityObjectToClipPos(v.vertex);
             o.world = mul(unity_ObjectToWorld, v.vertex);
+            o.uv = v.uv;
 
             // We can calculate the screen position with ComputeScreenPos(vertex), but this causes odd
             // rounding error at the boundary between mosaic pixels.  Instead, use VPOS.
@@ -73,7 +81,9 @@ SubShader {
             // between mosaiced and non-mosaiced.
             float f = 1;
 
-#if MASKING
+#if TEXTURE_MASKING
+            f = tex2D(MaskTex, i.uv);
+#elif SPHERE_MASKING
             {
                 // If MASKING is enabled, use the mask matrix.
                 float3 TransformedWorld = mul(MaskMatrix, float4(i.world, 1));

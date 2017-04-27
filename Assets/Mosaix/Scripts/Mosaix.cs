@@ -47,16 +47,26 @@ public class Mosaix: MonoBehaviour
     [RangeAttribute(0,1)]
     public float Alpha = 1;
 
+    public enum MaskMode
+    {
+        None,
+        Sphere,
+        Texture,
+    };
+
     [Header("Masking")]
+    public MaskMode MaskingMode;
+
     // A sphere to define where to mosaic.  This sphere can be scaled, stretched and rotated
     // to adjust the shape of the mosaic.
-    public GameObject MaskSphere;
+    public GameObject MaskingSphere;
 
-    // How far to fade the mosaic out around MaskSphere.  At 0, the mosaic cuts off sharply.
-    // At 1, we fade for the same size as MaskSphere: if it's 10 world units, the fade ends
+    // How far to fade the mosaic out around MaskingSphere.  At 0, the mosaic cuts off sharply.
+    // At 1, we fade for the same size as MaskingSphere: if it's 10 world units, the fade ends
     // 20 world units away.
     [RangeAttribute(0,1)]
     public float MaskFade = 0.1f;
+    public Texture MaskingTexture;
 
     // This shader copies the outermost edge of opaque pixels outwards.
     [Header("Internal")]
@@ -325,6 +335,10 @@ public class Mosaix: MonoBehaviour
 
         MosaicMaterial.SetTexture("MosaicTex", LowResolutionTexture1);
 
+        // Disable the masking shaders.  We'll enable the correct one below.
+        MosaicMaterial.DisableKeyword("SPHERE_MASKING");
+        MosaicMaterial.DisableKeyword("TEXTURE_MASKING");
+
         // Set up fading if we have a high resolution render and a fading control.
         if(HighResolutionRender)
         {
@@ -334,11 +348,16 @@ public class Mosaix: MonoBehaviour
             MosaicMaterial.EnableKeyword("FADING");
             MosaicMaterial.SetTexture("HighResTex", HighResolutionTextures[1]);
             MosaicMaterial.SetFloat("Alpha", Alpha);
+            MosaicMaterial.SetTexture("MaskTex", MaskingTexture);
 
-            // If we have a mask sphere, set up MASKING.
-            if(MaskSphere != null)
+            // Select whether we're using the texture masking shader, sphere masking, or no masking.
+            if(MaskingMode == MaskMode.Texture)
             {
-                // MaskSizeInner is how big the mosaic circle should be around MaskSphere.  Within this
+                MosaicMaterial.EnableKeyword("TEXTURE_MASKING");
+            }
+            else if(MaskingMode == MaskMode.Sphere)
+            {
+                // MaskSizeInner is how big the mosaic circle should be around MaskingSphere.  Within this
                 // distance, the mosaic is 100%.  MaskSizeOuter is the size of the fade-out.  At 0, the
                 // mosaic cuts out abruptly.  At 1, it fades out over one world space unit.
                 //
@@ -360,7 +379,7 @@ public class Mosaix: MonoBehaviour
                 MosaicMaterial.SetFloat("MaskSizeOuter", MaskSizeOuter);
                 float MaskSizeFactor = 1.0f / (MaskSizeInner - MaskSizeOuter);
                 MosaicMaterial.SetFloat("MaskSizeFactor", MaskSizeFactor);
-                Matrix4x4 mat = MaskSphere.transform.worldToLocalMatrix;
+                Matrix4x4 mat = MaskingSphere.transform.worldToLocalMatrix;
 
                 // Halve the size of the mask, since the distance from the center to the edge of
                 // the mask sphere is 0.5, not 1:
@@ -371,19 +390,13 @@ public class Mosaix: MonoBehaviour
 
                 MosaicMaterial.SetMatrix("MaskMatrix", mat);
 
-                MosaicMaterial.EnableKeyword("MASKING");
-            }
-            else
-            {
-                MosaicMaterial.DisableKeyword("MASKING");
+                MosaicMaterial.EnableKeyword("SPHERE_MASKING");
             }
         }
         else
         {
-            // We don't have a high-res texture, so disable fading.  Disable masking too to use a consistent
-            // shader build (this shouldn't matter).
+            // We don't have a high-res texture, so disable fading.
             MosaicMaterial.DisableKeyword("FADING");
-            MosaicMaterial.DisableKeyword("MASKING");
         }
 
         // Find the objects that we're mosaicing, and switch them to the mosaic shader, which

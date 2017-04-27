@@ -68,9 +68,10 @@ smoothly.
 Masking
 -------
 
-To mask the mosaic, create a 3D sphere and connect it to Mask Sphere.  Place the sphere,
-and parent it correctly so it follows the object to be mosaiced.  Once the sphere is
-placed, disable its Mesh Renderer so the sphere isn't visible.
+To mask the mosaic, select "Sphere" as the masking mode, create a 3D sphere and connect
+it to Masking Sphere.  Place the sphere, and parent it correctly so it follows the object
+to be mosaiced.  Once the sphere is placed, disable its Mesh Renderer so the sphere isn't
+visible.
 
 The object must be a sphere, but it can be scaled and rotated into oblong shapes to cover
 non-spherical areas.

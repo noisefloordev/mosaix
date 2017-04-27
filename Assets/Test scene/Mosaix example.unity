@@ -573,8 +573,10 @@ MonoBehaviour:
   ShadowsCastOnMosaic: 1
   HighResolutionRender: 1
   Alpha: 1
-  MaskSphere: {fileID: 241845595}
+  MaskingMode: 0
+  MaskingSphere: {fileID: 241845595}
   MaskFade: 0.1
+  MaskingTexture: {fileID: 2800000, guid: 42d16a9d3f4ec0e41b2df50d9d79c2c9, type: 3}
   ExpandEdgesShader: {fileID: 4800000, guid: 9666abf06efb7ae4981250b02600200c, type: 3}
   MosaicShader: {fileID: 4800000, guid: 84bd226b55f2d16448e3e33c92d85e70, type: 3}
   PremultiplyShader: {fileID: 4800000, guid: 568f4527e17048b4d8e53a42013fd521, type: 3}
@@ -605,8 +607,10 @@ MonoBehaviour:
   ShadowsCastOnMosaic: 1
   HighResolutionRender: 1
   Alpha: 1
-  MaskSphere: {fileID: 0}
+  MaskingMode: 0
+  MaskingSphere: {fileID: 0}
   MaskFade: 0
+  MaskingTexture: {fileID: 0}
   ExpandEdgesShader: {fileID: 4800000, guid: 9666abf06efb7ae4981250b02600200c, type: 3}
   MosaicShader: {fileID: 4800000, guid: 84bd226b55f2d16448e3e33c92d85e70, type: 3}
   PremultiplyShader: {fileID: 4800000, guid: 568f4527e17048b4d8e53a42013fd521, type: 3}
