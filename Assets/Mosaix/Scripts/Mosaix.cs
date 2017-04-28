@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEditor;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -96,6 +97,14 @@ public class Mosaix: MonoBehaviour
     private Material PremultiplyMaterial;
 
     private Dictionary<Renderer,Material[]> SavedMaterials = new Dictionary<Renderer,Material[]>();
+
+    void Reset()
+    {
+        // When the script is added in the editor, set the default shaders and mosaic material.
+        ExpandEdgesShader = Shader.Find("Hidden/Mosaix/ExpandEdges");
+        PremultiplyShader = Shader.Find("Hidden/Mosaix/Premultiply");
+        MosaicMaterial = (Material) AssetDatabase.LoadAssetAtPath("Assets/Mosaix/Shaders/Mosaic.mat", typeof(Material));
+    }
 
     void Start()
     {

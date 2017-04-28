@@ -68,10 +68,6 @@ be in the layer.
 ![](Images/Setup_PutMeshInLayer.png)
 - Attach Mosaix\Scripts\Mosaix.cs to your camera.
 - Set "Mosaic Layer" to the layer you created above.
-- Connect shaders:
-  * Mosaix\Shaders\Mosaic.shader -> "Mosaic Shader"
-  * Mosaix\Shaders\ExpandEdges.shader -> "Expand Edges Shader"
-  * Mosaix\Shaders\Premultiply.shader -> "Premultiply Shader"
 
 Play the scene, and the object will be mosaiced.
 
