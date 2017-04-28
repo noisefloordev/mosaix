@@ -36,16 +36,15 @@ SubShader {
 
 #if FADING
         sampler2D HighResTex;
-
-//#if MASKING
-        sampler2D MaskTex;
-//#else
-//#endif
-
-        float4x4 MaskMatrix;
         float Alpha;
+
+#if TEXTURE_MASKING
+        sampler2D MaskTex;
+#elif SPHERE_MASKING
+        float4x4 MaskMatrix;
         float MaskSizeOuter;
         float MaskSizeFactor;
+#endif
 #endif
 
         v2f vert(appdata_t v, out float4 vertex : SV_POSITION)
