@@ -14,6 +14,7 @@ using System.Collections.Generic;
 //
 // This could also be made to replace a specific material on the objects, to apply a mosaic
 // to a specific material but leave the rest of the mesh alone.
+[AddComponentMenu("Effects/Mosaix")]
 public class Mosaix: MonoBehaviour
 {
     // The render layer for objects to mosaic.
