@@ -508,6 +508,14 @@ public class Mosaix: MonoBehaviour
         foreach(KeyValuePair<Renderer,Material[]> SavedMat in SavedMaterials)
             SavedMat.Key.materials = SavedMat.Value;
         SavedMaterials.Clear();
+
+        // Discard the textures we rendered, since we don't need them anymore.
+        if(LowResolutionTexture1 != null)
+            LowResolutionTexture1.DiscardContents();
+        if(LowResolutionTexture2 != null)
+            LowResolutionTexture1.DiscardContents();
+        foreach(RenderTexture texture in HighResolutionTextures)
+            texture.DiscardContents();
     }
 };
 
