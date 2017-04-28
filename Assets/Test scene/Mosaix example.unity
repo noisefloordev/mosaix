@@ -567,7 +567,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b0db6b1309ac6244854380e7cf4f436, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  LayerName: Mosaic1
+  MosaicLayer: 8
   MosaicBlocks: 50
   DefaultColor: {r: 0, g: 0, b: 0, a: 1}
   ShadowsCastOnMosaic: 1
@@ -578,7 +578,7 @@ MonoBehaviour:
   MaskFade: 0.1
   MaskingTexture: {fileID: 2800000, guid: 42d16a9d3f4ec0e41b2df50d9d79c2c9, type: 3}
   ExpandEdgesShader: {fileID: 4800000, guid: 9666abf06efb7ae4981250b02600200c, type: 3}
-  MosaicShader: {fileID: 4800000, guid: 84bd226b55f2d16448e3e33c92d85e70, type: 3}
+  MosaicMaterial: {fileID: 2100000, guid: 0a8015bb40b2d2a429a5dabcce71e8e3, type: 2}
   PremultiplyShader: {fileID: 4800000, guid: 568f4527e17048b4d8e53a42013fd521, type: 3}
   LowResolutionTexture1: {fileID: 411596647}
   LowResolutionTexture2: {fileID: 822620158}
@@ -601,7 +601,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b0db6b1309ac6244854380e7cf4f436, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  LayerName: Mosaic2
+  MosaicLayer: 9
   MosaicBlocks: 80
   DefaultColor: {r: 0, g: 0, b: 0, a: 1}
   ShadowsCastOnMosaic: 1
@@ -612,7 +612,7 @@ MonoBehaviour:
   MaskFade: 0
   MaskingTexture: {fileID: 0}
   ExpandEdgesShader: {fileID: 4800000, guid: 9666abf06efb7ae4981250b02600200c, type: 3}
-  MosaicShader: {fileID: 4800000, guid: 84bd226b55f2d16448e3e33c92d85e70, type: 3}
+  MosaicMaterial: {fileID: 2100000, guid: 0a8015bb40b2d2a429a5dabcce71e8e3, type: 2}
   PremultiplyShader: {fileID: 4800000, guid: 568f4527e17048b4d8e53a42013fd521, type: 3}
   LowResolutionTexture1: {fileID: 411596647}
   LowResolutionTexture2: {fileID: 822620158}

@@ -34,8 +34,8 @@ public class MosaixEditor: Editor
 
         if(ShowShaders)
         {
+            obj.MosaicMaterial = (Material) EditorGUILayout.ObjectField("Mosaic Material", obj.MosaicMaterial, typeof(Material), false);
             obj.ExpandEdgesShader = (Shader) EditorGUILayout.ObjectField("Expand Edges Shader", obj.ExpandEdgesShader, typeof(Shader), false);
-            obj.MosaicShader = (Shader) EditorGUILayout.ObjectField("Mosaic Shader", obj.MosaicShader, typeof(Shader), false);
             obj.PremultiplyShader = (Shader) EditorGUILayout.ObjectField("Premultiply Shader", obj.PremultiplyShader, typeof(Shader), false);
         }
 

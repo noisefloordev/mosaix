@@ -1,7 +1,6 @@
-Shader "Hidden/Mosaix/Mosaic" {
+Shader "FX/Mosaix" {
 
 Properties {
-    _MainTex ("Base (RGB)", 2D) = "white" {}
 }
 
 SubShader {
@@ -11,6 +10,8 @@ SubShader {
     Blend One OneMinusSrcAlpha
 
     Pass {  
+        Name "MOSAIC"
+    
         CGPROGRAM
         #pragma vertex vert
         #pragma fragment frag
@@ -31,7 +32,6 @@ SubShader {
             // float4 screenPos : SCREENPOS;
         };
 
-        sampler2D _MainTex;
         sampler2D MosaicTex;
 
 #if FADING

@@ -68,8 +68,9 @@ public class Mosaix: MonoBehaviour
     // This shader copies the outermost edge of opaque pixels outwards.
     public Shader ExpandEdgesShader;
 
-    // This shader samples our low-resolution mosaic texture in screen space.
-    public Shader MosaicShader;
+    // This material calls MosaicShader, which samples our low-resolution mosaic texture in screen space.
+    // It can also be another material that calls the mosaic pass.
+    public Material MosaicMaterial;
 
     // The premultiply shader takes a regular texture and convert it to a premultiplied one.  This
     // allows for much higher-quality downscaling, without bleeding black from empty pixels.
@@ -92,7 +93,6 @@ public class Mosaix: MonoBehaviour
     public RenderTexture[] HighResolutionTextures;
 
     private Material ExpandEdgesMaterial;
-    private Material MosaicMaterial;
     private Material PremultiplyMaterial;
 
     private Dictionary<Renderer,Material[]> SavedMaterials = new Dictionary<Renderer,Material[]>();
@@ -108,8 +108,11 @@ public class Mosaix: MonoBehaviour
 
         // Create materials for our shaders.
         ExpandEdgesMaterial = new Material(ExpandEdgesShader);
-        MosaicMaterial = new Material(MosaicShader);
         PremultiplyMaterial = new Material(PremultiplyShader);
+
+        // Make a copy of the mosaic material.  We may be connected to a material used by multiple
+        // instances of this script, and we need the properties we set to not affect the others.
+        MosaicMaterial = new Material(MosaicMaterial);
 
         // Dynamically create a camera to render with.  We'll make this a child of this camera to keep
         // it from cluttering the scene, but this doesn't really matter.
