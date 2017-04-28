@@ -107,6 +107,9 @@ visible.
 The object must be a sphere, but it can be scaled and rotated into oblong shapes to cover
 non-spherical areas.
 
+The "Sphere Collider" component should be deleted from the sphere, so objects don't collide
+with it.
+
 Mask Fade can be set to fade away the mosaic.  At 0, the mosaic cuts off sharply at the
 edge of the sphere.
 
