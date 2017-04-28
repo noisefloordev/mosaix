@@ -1,5 +1,7 @@
 This is a Unity script to give clean mosaics.
 
+This code is in the public domain.
+
 No bleeding with the scene
 --------------------------
 
