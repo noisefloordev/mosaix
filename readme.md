@@ -44,6 +44,17 @@ and parented to the object or a character's skeleton so it follows the object.
 
 ![](Images/sphere_masked.png)
 
+Integrating with cartoon outline shaders
+----------------------------------------
+
+Existing cartoon outline shaders can be drawn as a separate pass.  This allows mosaicing an
+object, but retaining clean outlines.
+
+(Since everyone has their own shaders and each shader works differently, integration
+with external shaders like toon outlines requires shader editing.)
+
+![](Images/external_shaders.png)
+
 Usage
 -----
 
