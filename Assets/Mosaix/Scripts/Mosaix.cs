@@ -85,13 +85,13 @@ public class Mosaix: MonoBehaviour
     // A matching camera to this one:
     private Camera MosaicCamera;
 
-    public RenderTexture LowResolutionTexture1;
-    public RenderTexture LowResolutionTexture2;
+    // This is an array of textures, starting at full size and progressively getting smaller towards the
+    // mosaic size.
+    public RenderTexture[] OutputTextures;
 
-    // If HighResolutionRender is true, this is an array of textures, starting at the full window
-    // size and incrementing towards the mosaic size.  The final texture will be one step larger
-    // than LowResolutionTexture.
-    public RenderTexture[] HighResolutionTextures;
+    // This is a spare texture with the same dimensions as the last OutputTextures, used for
+    // ExpandEdgesMaterial.
+    public RenderTexture ExpandTexture;
 
     private Material ExpandEdgesMaterial;
     private Material PremultiplyMaterial;
@@ -218,72 +218,77 @@ public class Mosaix: MonoBehaviour
         HorizontalMosaicBlocks = Math.Max(HorizontalMosaicBlocks, 1);
         VerticalMosaicBlocks = Math.Max(VerticalMosaicBlocks, 1);
 
+        int CurrentWidth = Width, CurrentHeight = Height;
+
+        // If we're doing a low-resolution render, render at the block size, and we won't have
+        // any rescaling passes below.
+        if(!HighResolutionRender)
+        {
+            CurrentWidth = HorizontalMosaicBlocks;
+            CurrentHeight = VerticalMosaicBlocks;
+        }
+
         // If the render targets are already created and the resolution we want them to be hasn't changed,
         // don't recreate them.
-        if(LowResolutionTexture1 != null &&
-            LowResolutionTexture1.width == HorizontalMosaicBlocks &&
-            LowResolutionTexture1.height == VerticalMosaicBlocks)
+        if(OutputTextures.Length != 0 &&
+            OutputTextures[0].width == CurrentWidth &&
+            OutputTextures[0].height == CurrentHeight &&
+            OutputTextures[OutputTextures.Length-1].width == HorizontalMosaicBlocks &&
+            OutputTextures[OutputTextures.Length-1].height == VerticalMosaicBlocks)
             return;
 
         ReleaseTextures();
 
-        if(HighResolutionRender)
+        // We'll render to the first texture, then blit each texture to the next to progressively
+        // downscale it.
+        List<RenderTexture> Textures = new List<RenderTexture>();
+
+        // The first texture is what we render into.  This is also the only texture that needs a depth buffer.
+        Textures.Add(new RenderTexture(CurrentWidth, CurrentHeight, 24));
+
+        // The first copy only premultiplies alpha and doesn't downscale, so downscaling always
+        // happens on premultiplied alpha.
+        Textures.Add(new RenderTexture(CurrentWidth, CurrentHeight, 0));
+
+        // Create a texture for each downscale step.
+        while(true)
         {
-            // We'll render to the full resolution, then downscale to the mosaic resolution.  
-            // If we created a POT texture we could do this by creating mipmaps, but we want
-            // the full resolution texture to match the screen resolution so we can sample
-            // cleanly.
-            List<RenderTexture> Textures = new List<RenderTexture>();
-            int CurrentWidth = Width, CurrentHeight = Height;
-            bool First = true;
-            do
-            {
-                // We only need a depth buffer for the first texture, since we render into it.  We only
-                // blit into the others.
-                RenderTexture texture = new RenderTexture(CurrentWidth, CurrentHeight, First? 24:0);
-                Textures.Add(texture);
+            // Each pass halves the resolution, except for the last pass which snaps to the
+            // final resolution.
+            CurrentWidth /= 2;
+            CurrentHeight /= 2;
+            CurrentWidth = Math.Max(CurrentWidth, HorizontalMosaicBlocks);
+            CurrentHeight = Math.Max(CurrentHeight, VerticalMosaicBlocks);
 
-                // The first pass only premultiplies alpha and doesn't downscale, so downscaling always
-                // happens on premultiplied alpha.
-                if(!First)
-                {
-                    CurrentWidth /= 2;
-                    CurrentHeight /= 2;
-                }
+            // If we've already reached the target resolution, we're done.
+            if(Textures[Textures.Count-1].width == CurrentWidth &&
+               Textures[Textures.Count-1].height == CurrentHeight)
+                break;
 
-                First = false;
-            }
-            while(CurrentWidth > HorizontalMosaicBlocks && CurrentHeight > VerticalMosaicBlocks);
-            HighResolutionTextures = Textures.ToArray();
+            Textures.Add(new RenderTexture(CurrentWidth, CurrentHeight, 0));
         }
 
-        LowResolutionTexture1 = new RenderTexture(HorizontalMosaicBlocks, VerticalMosaicBlocks, 24);
-        LowResolutionTexture2 = new RenderTexture(HorizontalMosaicBlocks, VerticalMosaicBlocks, 24);
+        OutputTextures = Textures.ToArray();
 
-        // Draw the low-resolution texture with nearest neighbor sampling.
-        LowResolutionTexture1.filterMode = FilterMode.Point;
-        LowResolutionTexture2.filterMode = FilterMode.Point;
+        // ExpandTexture is a temporary texture that ping pongs with the final low-resolution texture.
+        ExpandTexture = new RenderTexture(
+                OutputTextures[OutputTextures.Length - 1].width,
+                OutputTextures[OutputTextures.Length - 1].height, 0);
     }
 
     private void ReleaseTextures()
     {
-        if(HighResolutionTextures != null)
+        if(OutputTextures != null)
         {
-            foreach(RenderTexture texture in HighResolutionTextures)
+            foreach(RenderTexture texture in OutputTextures)
                 texture.Release();
-            HighResolutionTextures = null;
+            OutputTextures = null;
         }
 
-        if(LowResolutionTexture1 != null)
+        if(ExpandTexture != null)
         {
-            LowResolutionTexture1.Release();
-            LowResolutionTexture1 = null;
-        }
-
-        if(LowResolutionTexture2 != null)
-        {
-            LowResolutionTexture2.Release();
-            LowResolutionTexture2 = null;
+            ExpandTexture.Release();
+            ExpandTexture = null;
         }
     }
 
@@ -344,31 +349,28 @@ public class Mosaix: MonoBehaviour
 
         MosaicCamera.renderingPath = ThisCamera.renderingPath;
         MosaicCamera.clearFlags = CameraClearFlags.SolidColor;
-        MosaicCamera.targetTexture = HighResolutionRender? HighResolutionTextures[0]:LowResolutionTexture1;
+        MosaicCamera.targetTexture = OutputTextures[0];
 
         MosaicCamera.Render();
 
-        if(HighResolutionRender)
+        // Blit the image to progressively smaller textures to cleanly downscale it.
+        for(int i = 0; i < OutputTextures.Length - 1; ++i)
         {
-            // We rendered at full resolution.  Blit the image to progressively smaller textures to
-            // cleanly downscale it.
-            for(int i = 0; i < HighResolutionTextures.Length - 1; ++i)
-            {
-                // The first pass premultiplies alpha.
-                if(i == 0)
-                    Graphics.Blit(HighResolutionTextures[i], HighResolutionTextures[i+1], PremultiplyMaterial);
-                else
-                    Graphics.Blit(HighResolutionTextures[i], HighResolutionTextures[i+1]);
-            }
-            Graphics.Blit(HighResolutionTextures[HighResolutionTextures.Length-1], LowResolutionTexture1);
-        }
-        else
-        {
-            // We rendered at mosaic resolution.  Blit the image once to premultiply.
-            Graphics.Blit(LowResolutionTexture1, LowResolutionTexture2, PremultiplyMaterial);
-            RenderTexture tmp = LowResolutionTexture1;
-            LowResolutionTexture1 = LowResolutionTexture2;
-            LowResolutionTexture2 = tmp;
+            RenderTexture src = OutputTextures[i];
+            RenderTexture dst = OutputTextures[i+1];
+
+            // Stash the filter mode, and make sure it's set to bilinear for scaling.
+            FilterMode SavedFilterMode = src.filterMode;
+            src.filterMode = FilterMode.Bilinear;
+
+            // The first pass premultiplies alpha.
+            if(i == 0)
+                Graphics.Blit(src, dst, PremultiplyMaterial);
+            else
+                Graphics.Blit(src, dst);
+
+            // Restore the original filter mode.
+            src.filterMode = SavedFilterMode;
         }
 
         // Now that we're done rendering the mosaic texture, undo any changes we just made to shadowCastingMode.
@@ -377,70 +379,63 @@ public class Mosaix: MonoBehaviour
 
         ExpandMosaic();
 
-        MosaicMaterial.SetTexture("MosaicTex", LowResolutionTexture1);
+        // Draw the low-resolution texture with nearest neighbor sampling.
+        RenderTexture MosaicTex = OutputTextures[OutputTextures.Length-1];
+        MosaicTex.filterMode = FilterMode.Point;
+        MosaicMaterial.SetTexture("MosaicTex", MosaicTex);
 
         // Disable the masking shaders.  We'll enable the correct one below.
         MosaicMaterial.DisableKeyword("SPHERE_MASKING");
         MosaicMaterial.DisableKeyword("TEXTURE_MASKING");
 
-        // Set up fading if we have a high resolution render and a fading control.
-        if(HighResolutionRender)
+        // HighResTex is the texture to sample where the mosaic is masked out.  If we're not rendering
+        // in high resolution, this will be the same texture as the mosaic, so masking and alpha won't
+        // do anything.
+        MosaicMaterial.SetTexture("HighResTex", OutputTextures[1]);
+        MosaicMaterial.SetFloat("Alpha", Alpha);
+        MosaicMaterial.SetTexture("MaskTex", MaskingTexture);
+
+        // Select whether we're using the texture masking shader, sphere masking, or no masking.
+        if(MaskingMode == MaskMode.Texture)
         {
-            // We're rendering in high resolution, so fading and masking is supported.  Enable FADING
-            // to have the shader sample both the low- and high-resolution textures, which enables
-            // alpha.
-            MosaicMaterial.EnableKeyword("FADING");
-            MosaicMaterial.SetTexture("HighResTex", HighResolutionTextures[1]);
-            MosaicMaterial.SetFloat("Alpha", Alpha);
-            MosaicMaterial.SetTexture("MaskTex", MaskingTexture);
-
-            // Select whether we're using the texture masking shader, sphere masking, or no masking.
-            if(MaskingMode == MaskMode.Texture)
-            {
-                MosaicMaterial.EnableKeyword("TEXTURE_MASKING");
-            }
-            else if(MaskingMode == MaskMode.Sphere)
-            {
-                // MaskSizeInner is how big the mosaic circle should be around MaskingSphere.  Within this
-                // distance, the mosaic is 100%.  MaskSizeOuter is the size of the fade-out.  At 0, the
-                // mosaic cuts out abruptly.  At 1, it fades out over one world space unit.
-                //
-                // The transparency of the mosaic scales distance so MaskSizeInner is 1 (100%) and MaskSizeOuter
-                // is 0 (0%).  If the distance is less than MaskSizeInner it'll be above 1 and clamped.  This
-                // is simply:
-                //
-                // f = (dist - MaskSizeOuter) / (MaskSizeInner - MaskSizeOuter);
-                //
-                // To remove the division from the fragment shader, we pass in MaskScaleFactor,
-                // which is 1 / (MaskSizeInner - MaskSizeOuter).
-                //
-                // If the fade is zero, nudge it up slightly to avoid division by zero.
-                float MaskSizeInner = 1;
-                float MaskSizeOuter = MaskSizeInner + MaskFade;
-                if(MaskFade == 0)
-                    MaskSizeOuter += 0.0001f;
-
-                MosaicMaterial.SetFloat("MaskSizeOuter", MaskSizeOuter);
-                float MaskSizeFactor = 1.0f / (MaskSizeInner - MaskSizeOuter);
-                MosaicMaterial.SetFloat("MaskSizeFactor", MaskSizeFactor);
-                Matrix4x4 mat = MaskingSphere.transform.worldToLocalMatrix;
-
-                // Halve the size of the mask, since the distance from the center to the edge of
-                // the mask sphere is 0.5, not 1:
-                mat = Matrix4x4.TRS(
-                        Vector3.zero,
-                        Quaternion.AngleAxis(0, new Vector3(1,0,0)),
-                        new Vector3(2,2,2)) * mat;
-
-                MosaicMaterial.SetMatrix("MaskMatrix", mat);
-
-                MosaicMaterial.EnableKeyword("SPHERE_MASKING");
-            }
+            MosaicMaterial.EnableKeyword("TEXTURE_MASKING");
         }
-        else
+        else if(MaskingMode == MaskMode.Sphere)
         {
-            // We don't have a high-res texture, so disable fading.
-            MosaicMaterial.DisableKeyword("FADING");
+            MosaicMaterial.EnableKeyword("SPHERE_MASKING");
+
+            // MaskSizeInner is how big the mosaic circle should be around MaskingSphere.  Within this
+            // distance, the mosaic is 100%.  MaskSizeOuter is the size of the fade-out.  At 0, the
+            // mosaic cuts out abruptly.  At 1, it fades out over one world space unit.
+            //
+            // The transparency of the mosaic scales distance so MaskSizeInner is 1 (100%) and MaskSizeOuter
+            // is 0 (0%).  If the distance is less than MaskSizeInner it'll be above 1 and clamped.  This
+            // is simply:
+            //
+            // f = (dist - MaskSizeOuter) / (MaskSizeInner - MaskSizeOuter);
+            //
+            // To remove the division from the fragment shader, we pass in MaskScaleFactor,
+            // which is 1 / (MaskSizeInner - MaskSizeOuter).
+            //
+            // If the fade is zero, nudge it up slightly to avoid division by zero.
+            float MaskSizeInner = 1;
+            float MaskSizeOuter = MaskSizeInner + MaskFade;
+            if(MaskFade == 0)
+                MaskSizeOuter += 0.0001f;
+
+            MosaicMaterial.SetFloat("MaskSizeOuter", MaskSizeOuter);
+            float MaskSizeFactor = 1.0f / (MaskSizeInner - MaskSizeOuter);
+            MosaicMaterial.SetFloat("MaskSizeFactor", MaskSizeFactor);
+            Matrix4x4 mat = MaskingSphere.transform.worldToLocalMatrix;
+
+            // Halve the size of the mask, since the distance from the center to the edge of
+            // the mask sphere is 0.5, not 1:
+            mat = Matrix4x4.TRS(
+                    Vector3.zero,
+                    Quaternion.AngleAxis(0, new Vector3(1,0,0)),
+                    new Vector3(2,2,2)) * mat;
+
+            MosaicMaterial.SetMatrix("MaskMatrix", mat);
         }
 
         // Find the objects that we're mosaicing, and switch them to the mosaic shader, which
@@ -490,15 +485,18 @@ public class Mosaix: MonoBehaviour
         //
         // This is the UV step the shader needs to advance to see the pixel adjacent to itself.  This is used
         // to find a pixel inside the layer if it samples a pixel with no color.
-        Vector4 PixelUVStep = new Vector4(1.0f / LowResolutionTexture1.width, 1.0f / LowResolutionTexture1.height, 0, 0);
+        Vector4 PixelUVStep = new Vector4(1.0f / ExpandTexture.width, 1.0f / ExpandTexture.height, 0, 0);
 
         ExpandEdgesMaterial.SetVector("PixelUVStep", PixelUVStep);
         for(int pass = 0; pass < 4; ++pass)
         {
-            Graphics.Blit(LowResolutionTexture1, LowResolutionTexture2, ExpandEdgesMaterial);
-            RenderTexture tmp = LowResolutionTexture1;
-            LowResolutionTexture1 = LowResolutionTexture2;
-            LowResolutionTexture2 = tmp;
+            // The last OutputTexture and ExpandTexture are the same size.  Blit from the texture to
+            // ExpandTexture to do one expand pass, then swap the two to make the expanded texture the
+            // final texture.
+            Graphics.Blit(OutputTextures[OutputTextures.Length - 1], ExpandTexture, ExpandEdgesMaterial);
+            RenderTexture tmp = ExpandTexture;
+            ExpandTexture = OutputTextures[OutputTextures.Length - 1];
+            OutputTextures[OutputTextures.Length - 1] = tmp;
         }
     }
 
@@ -510,11 +508,9 @@ public class Mosaix: MonoBehaviour
         SavedMaterials.Clear();
 
         // Discard the textures we rendered, since we don't need them anymore.
-        if(LowResolutionTexture1 != null)
-            LowResolutionTexture1.DiscardContents();
-        if(LowResolutionTexture2 != null)
-            LowResolutionTexture1.DiscardContents();
-        foreach(RenderTexture texture in HighResolutionTextures)
+        if(ExpandTexture != null)
+            ExpandTexture.DiscardContents();
+        foreach(RenderTexture texture in OutputTextures)
             texture.DiscardContents();
     }
 };
