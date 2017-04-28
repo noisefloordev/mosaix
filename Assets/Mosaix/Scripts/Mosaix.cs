@@ -106,6 +106,41 @@ public class Mosaix: MonoBehaviour
         MosaicMaterial = (Material) AssetDatabase.LoadAssetAtPath("Assets/Mosaix/Shaders/Mosaic.mat", typeof(Material));
     }
 
+    static HashSet<Mosaix> EnabledMosaixScripts = new HashSet<Mosaix>();
+    void OnEnable()
+    {
+        EnabledMosaixScripts.Add(this);
+
+        // If more than one of these scripts is attached to the same layer on the same camera, our
+        // material replacement in OnPreRender and OnPostRender won't behave correctly.  This is
+        // because if multiple scripts have PreRender and PostRenders, Unity calls them in linear
+        // order instead of as a stack.  That is, instead of
+        //
+        // Script1.PreRender Script2.PreRender Script2.PostRender Script1.PostRender
+        //
+        // it'll call 
+        // Script1.PreRender Script2.PreRender Script1.PostRender Script2.PostRender
+        //
+        // This makes it hard to push and pop render state properly.
+        //
+        // This probably isn't too useful and if it's happened it's probably unintentional.  Warn about
+        // it, since it can cause confusing results.
+        foreach(Mosaix script in EnabledMosaixScripts)
+        {
+            if(script == this || MosaicLayer != script.MosaicLayer || ThisCamera != script.ThisCamera ||
+                MosaicLayer != script.MosaicLayer)
+                continue;
+
+            Debug.Log("Warning: Multiple Mosaix scripts have been applied to the same display layer " +
+                    LayerMask.LayerToName(MosaicLayer) + " on camera " + ThisCamera + ".  This may not work.");
+        }
+    }
+
+    void OnDisable()
+    {
+        EnabledMosaixScripts.Remove(this);
+    }
+
     void Start()
     {
         ThisCamera = gameObject.GetComponent<Camera>();
@@ -309,7 +344,6 @@ public class Mosaix: MonoBehaviour
 
         MosaicCamera.renderingPath = ThisCamera.renderingPath;
         MosaicCamera.clearFlags = CameraClearFlags.SolidColor;
-//        MosaicCamera.targetTexture = HighResolutionTextures[0];
         MosaicCamera.targetTexture = HighResolutionRender? HighResolutionTextures[0]:LowResolutionTexture1;
 
         MosaicCamera.Render();
