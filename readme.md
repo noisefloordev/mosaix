@@ -60,11 +60,9 @@ Usage
 
 See "Test scene\Mosaix example.unity" for an example.
 
-- In the Inspector, Layer -> Add Layer.  Create a layer for objects to mosaic.  Call
-it something like "Mosaic".
+- In the Inspector, Layer -> Add Layer, and create a layer to mosaic.  
 ![](Images/Setup_AddLayer.png)
-- Select the object to mosaic, and put it in the new layer.  More than one object can
-be in the layer.
+- Put objects to mosaic in the new layer.  
 ![](Images/Setup_PutMeshInLayer.png)
 - Attach Mosaix\Scripts\Mosaix.cs to your camera.
 - Set "Mosaic Layer" to the layer you created above.
