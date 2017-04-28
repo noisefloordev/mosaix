@@ -117,3 +117,12 @@ To mosaic two objects separately, add a second Mosaix script to your camera, and
 with a separate layer.  The objects won't bleed together, and can use different settings,
 such as a different number of mosaic blocks.
 
+Integrating with cartoon shaders
+--------------------------------
+
+See **Test scene\Materials\MosaicWithOutline.mat** and **Test scene\Materials\MosaicWithOutline.shader**
+for an example.  By creating your own shader that calls the mosaic shader with UsePass,
+you can integrate other effects on top of the mosaic, such as cartoon outlines.  Assign
+your alternate shader to a material, and set that material as the Mosaic Material inside
+the Shaders section of the script.
+
