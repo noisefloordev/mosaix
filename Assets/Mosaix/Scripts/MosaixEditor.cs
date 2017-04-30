@@ -5,15 +5,35 @@ using System.Collections;
 [CustomEditor(typeof(Mosaix))]
 public class MosaixEditor: Editor
 {
-    bool ShowShaders = false;
-    bool ShowAdvanced = false;
-    bool ShowTextures = false;
+    static Material TextureDisplayMaterial;
 
-    int DisplayedTexture = 0;
-    bool ShowAlpha = false;
+    public enum TextureDisplayMode
+    {
+        Normal,
+        ShowAlphaOnly,
+        ShowWithoutAlpha,
+        ShowUnpremultiplied,
+    };
+
+    // These are transient settings that affect the inspector only.  We store these on the Mosaix object
+    // itself so they're preserved when the object is deselected and reselected, but they're Nonserialized
+    // so they aren't saved with the scene, which would cause annoying noise in version control.
+    public class EditorSettings
+    {
+        public bool ShowShaders = false;
+        public bool ShowAdvanced = false;
+        public bool ShowDebugging = false;
+
+        public int DisplayedTexture = 0;
+        public bool ScaleTexture = true;
+        public TextureDisplayMode DisplayMode = TextureDisplayMode.Normal;
+    };
 
     public override void OnInspectorGUI()
     {
+        if(TextureDisplayMaterial == null)
+            TextureDisplayMaterial = new Material(Shader.Find("Hidden/Mosaix/EditorTextureDisplay"));
+
         Mosaix obj = (Mosaix) target;
         
         EditorGUILayout.LabelField("Basic settings", EditorStyles.boldLabel);
@@ -35,17 +55,17 @@ public class MosaixEditor: Editor
 
         GUIStyle boldFoldout = new GUIStyle(EditorStyles.foldout);
         boldFoldout.fontStyle = FontStyle.Bold;
-        ShowShaders = EditorGUILayout.Foldout(ShowShaders, "Shaders", true, boldFoldout);
+        obj.EditorSettings.ShowShaders = EditorGUILayout.Foldout(obj.EditorSettings.ShowShaders, "Shaders", true, boldFoldout);
 
-        if(ShowShaders)
+        if(obj.EditorSettings.ShowShaders)
         {
             obj.MosaicMaterial = (Material) EditorGUILayout.ObjectField("Mosaic Material", obj.MosaicMaterial, typeof(Material), false);
             obj.ExpandEdgesShader = (Shader) EditorGUILayout.ObjectField("Expand Edges Shader", obj.ExpandEdgesShader, typeof(Shader), false);
             obj.PremultiplyShader = (Shader) EditorGUILayout.ObjectField("Premultiply Shader", obj.PremultiplyShader, typeof(Shader), false);
         }
 
-        ShowAdvanced = EditorGUILayout.Foldout(ShowAdvanced, "Advanced settings", true, boldFoldout);
-        if(ShowAdvanced)
+        obj.EditorSettings.ShowAdvanced = EditorGUILayout.Foldout(obj.EditorSettings.ShowAdvanced, "Advanced settings", true, boldFoldout);
+        if(obj.EditorSettings.ShowAdvanced)
         {
             obj.ShadowsCastOnMosaic = EditorGUILayout.Toggle("Shadows Cast On Mosaic", obj.ShadowsCastOnMosaic);
             obj.HighResolutionRender = EditorGUILayout.Toggle("High Resolution Render", obj.HighResolutionRender);
@@ -56,14 +76,15 @@ public class MosaixEditor: Editor
         if(EditorApplication.isPlaying)
         {
             // For development, allow inspecting the various textures used by the shader.
-            ShowTextures = EditorGUILayout.Foldout(ShowTextures, "Textures (debugging)", true, boldFoldout);
+            obj.EditorSettings.ShowDebugging = EditorGUILayout.Foldout(obj.EditorSettings.ShowDebugging, "Debugging", true, boldFoldout);
 
-            if(ShowTextures)
+            if(obj.EditorSettings.ShowDebugging)
             {
                 int NumTextures = obj.OutputTextures != null?  NumTextures = obj.OutputTextures.Length:0;
-                DisplayedTexture = EditorGUILayout.IntSlider("Texture", DisplayedTexture, 0, NumTextures-1);
+                obj.EditorSettings.DisplayedTexture = EditorGUILayout.IntSlider("Texture", obj.EditorSettings.DisplayedTexture, 0, NumTextures-1);
 
-                ShowAlpha = EditorGUILayout.Toggle("Show alpha", ShowAlpha);
+                obj.EditorSettings.ScaleTexture = EditorGUILayout.Toggle("Scale texture", obj.EditorSettings.ScaleTexture);
+                obj.EditorSettings.DisplayMode = (TextureDisplayMode) EditorGUILayout.EnumPopup("Display Mode", obj.EditorSettings.DisplayMode);
 
                 if(obj.OutputTextures != null && obj.OutputTextures.Length != 0)
                 {
@@ -72,24 +93,46 @@ public class MosaixEditor: Editor
                     GUILayout.FlexibleSpace();
                     
                     // Begin the BeginVertical block that will contain only the texture.
+                    int ScaleTextureIndex = obj.EditorSettings.ScaleTexture? 0:obj.EditorSettings.DisplayedTexture;
                     Rect r = EditorGUILayout.BeginVertical(new GUILayoutOption[] {
-                            GUILayout.MinHeight(obj.OutputTextures[0].height),
-                            GUILayout.MinWidth(obj.OutputTextures[0].width),
+                            GUILayout.MinHeight(obj.OutputTextures[ScaleTextureIndex].height),
+                            GUILayout.MinWidth(obj.OutputTextures[ScaleTextureIndex].width),
                     });
 
                     // There's no EditorGUILayout for drawing textures.  Insert a space, to tell layout
                     // about the space we need for the texture display.
-                    GUILayout.Space(obj.OutputTextures[0].height);
+                    GUILayout.Space(obj.OutputTextures[ScaleTextureIndex].height);
 
-                    Texture tex = obj.OutputTextures[DisplayedTexture];
+                    Texture tex = obj.OutputTextures[obj.EditorSettings.DisplayedTexture];
 
                     // Save the filter mode and switch to nearest neighbor to draw it in the editor.
                     FilterMode SavedFilterMode = tex.filterMode;
                     tex.filterMode = FilterMode.Point;
-                    if(ShowAlpha)
-                        EditorGUI.DrawTextureAlpha(r, tex, ScaleMode.ScaleToFit);
-                    else
-                        EditorGUI.DrawPreviewTexture(r, tex, null, ScaleMode.ScaleToFit);
+
+                    // Note that we don't use DrawTextureAlpha or the default DrawPreviewTexture material.
+                    // These seem to perform some kind of unwanted color management to the texture and don't
+                    // show us what's really in it (eg. 1.0 alpha outputs as 0.8).  We just use our own
+                    // material for all display modes.
+                    Material mat = TextureDisplayMaterial;
+                    foreach(string keyword in mat.shaderKeywords)
+                        mat.DisableKeyword(keyword);
+                    switch(obj.EditorSettings.DisplayMode)
+                    {
+                    case TextureDisplayMode.Normal:
+                        mat.EnableKeyword("DISP_NORMAL");
+                        break;
+                    case TextureDisplayMode.ShowAlphaOnly:
+                        mat.EnableKeyword("DISP_ALPHA_ONLY");
+                        break;
+                    case TextureDisplayMode.ShowWithoutAlpha:
+                        mat.EnableKeyword("DISP_WITHOUT_ALPHA");
+                        break;
+                    case TextureDisplayMode.ShowUnpremultiplied:
+                        mat.EnableKeyword("DISP_UNPREMULTIPLY");
+                        break;
+                    }
+                    
+                    EditorGUI.DrawPreviewTexture(r, tex, mat);
                     tex.filterMode = SavedFilterMode;
                     
                     EditorGUILayout.EndVertical();

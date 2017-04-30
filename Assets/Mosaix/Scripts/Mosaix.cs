@@ -94,6 +94,10 @@ public class Mosaix: MonoBehaviour
     // ExpandEdgesMaterial.
     public RenderTexture ExpandTexture;
 
+    // These are settings only used by MosaixEditor.
+    [System.NonSerialized]
+    public MosaixEditor.EditorSettings EditorSettings = new MosaixEditor.EditorSettings();
+
     private Material ExpandEdgesMaterial;
     private Material PremultiplyMaterial;
 
