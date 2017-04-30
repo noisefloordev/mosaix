@@ -95,13 +95,6 @@ SubShader {
 
             fixed4 color2 = tex2D(HighResTex, uv);
             fixed4 color = color1*f + color2*(1-f);
-
-            // The texture we're sampling may have empty pixels, if the ExpandEdges pass didn't
-            // fill it in entirely.  In this case, the alpha will be zero, but we don't want to
-            // draw transparent mosaic blocks, since it looks very strange.  Force the alpha
-            // to 1 so this doesn't happen, and we'll draw the default color instead.  This
-            // should be disabled if you need to mosaic transparent objects.
-//            color.a = 1;
             return color;
         }
         ENDCG
