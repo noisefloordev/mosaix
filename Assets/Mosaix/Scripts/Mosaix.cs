@@ -24,9 +24,6 @@ public class Mosaix: MonoBehaviour
     // blocks square.
     public int MosaicBlocks = 16;
     
-    // If the expand pass doesn't fill the layer, this is the fallback color that will be visible.
-    public Color DefaultColor = new Color(0,0,0,1);
-
     // If true, we'll render the mosaic texture with other objects casting shadows.  Turning this off may
     // be faster, but will result in the mosaic having no shadowing, which can cause it to be too bright
     // depending on the scene.
@@ -316,9 +313,8 @@ public class Mosaix: MonoBehaviour
         // Match the helper camera to the main camera.
         MosaicCamera.CopyFrom(ThisCamera);
 
-        // The background color is only visible if we're not doing any expand passes.  Otherwise, it'll
-        // be visible as the default result from ExpandEdges.shader.
-        MosaicCamera.backgroundColor = new Color(DefaultColor.r, DefaultColor.g, DefaultColor.b, 0);
+        // Set the background color to black.
+        MosaicCamera.backgroundColor = new Color(0, 0, 0, 0);
 
         //
         // Render the mosaic texture.
