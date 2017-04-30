@@ -388,9 +388,9 @@ public class Mosaix: MonoBehaviour
         MosaicTex.filterMode = FilterMode.Point;
         MosaicMaterial.SetTexture("MosaicTex", MosaicTex);
 
-        // Disable the masking shaders.  We'll enable the correct one below.
-        MosaicMaterial.DisableKeyword("SPHERE_MASKING");
-        MosaicMaterial.DisableKeyword("TEXTURE_MASKING");
+        // Disable material keywords.  We'll set the correct ones below.
+        foreach(string keyword in MosaicMaterial.shaderKeywords)
+            MosaicMaterial.DisableKeyword(keyword);
 
         // HighResTex is the texture to sample where the mosaic is masked out.  If we're not rendering
         // in high resolution, this will be the same texture as the mosaic, so masking and alpha won't
