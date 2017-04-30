@@ -44,6 +44,9 @@ public class Mosaix: MonoBehaviour
 
     public float Alpha = 1;
 
+    // The number of ExpandEdges passes to perform.
+    public int ExpandPasses = 4;
+
     public enum MaskMode
     {
         None,
@@ -489,7 +492,7 @@ public class Mosaix: MonoBehaviour
         Vector4 PixelUVStep = new Vector4(1.0f / ExpandTexture.width, 1.0f / ExpandTexture.height, 0, 0);
 
         ExpandEdgesMaterial.SetVector("PixelUVStep", PixelUVStep);
-        for(int pass = 0; pass < 4; ++pass)
+        for(int pass = 0; pass < ExpandPasses; ++pass)
         {
             // The last OutputTexture and ExpandTexture are the same size.  Blit from the texture to
             // ExpandTexture to do one expand pass, then swap the two to make the expanded texture the

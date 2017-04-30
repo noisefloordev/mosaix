@@ -50,6 +50,7 @@ public class MosaixEditor: Editor
             obj.ShadowsCastOnMosaic = EditorGUILayout.Toggle("Shadows Cast On Mosaic", obj.ShadowsCastOnMosaic);
             obj.HighResolutionRender = EditorGUILayout.Toggle("High Resolution Render", obj.HighResolutionRender);
             obj.Alpha = EditorGUILayout.Slider("Alpha", obj.Alpha, 0, 1);
+            obj.ExpandPasses = EditorGUILayout.IntSlider("Expand Passes", obj.ExpandPasses, 0, 20);
         }
 
         if(EditorApplication.isPlaying)
