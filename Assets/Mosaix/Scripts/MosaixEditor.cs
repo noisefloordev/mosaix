@@ -7,6 +7,11 @@ public class MosaixEditor: Editor
 {
     bool ShowShaders = false;
     bool ShowAdvanced = false;
+    bool ShowTextures = false;
+
+    int DisplayedTexture = 0;
+    bool ShowAlpha = false;
+
     public override void OnInspectorGUI()
     {
         Mosaix obj = (Mosaix) target;
@@ -45,6 +50,52 @@ public class MosaixEditor: Editor
             obj.ShadowsCastOnMosaic = EditorGUILayout.Toggle("Shadows Cast On Mosaic", obj.ShadowsCastOnMosaic);
             obj.HighResolutionRender = EditorGUILayout.Toggle("High Resolution Render", obj.HighResolutionRender);
             obj.Alpha = EditorGUILayout.Slider("Alpha", obj.Alpha, 0, 1);
+        }
+
+        if(EditorApplication.isPlaying)
+        {
+            // For development, allow inspecting the various textures used by the shader.
+            ShowTextures = EditorGUILayout.Foldout(ShowTextures, "Textures (debugging)", true, boldFoldout);
+
+            if(ShowTextures)
+            {
+                int NumTextures = obj.OutputTextures != null?  NumTextures = obj.OutputTextures.Length:0;
+                DisplayedTexture = EditorGUILayout.IntSlider("Texture", DisplayedTexture, 0, NumTextures-1);
+
+                ShowAlpha = EditorGUILayout.Toggle("Show alpha", ShowAlpha);
+
+                if(obj.OutputTextures != null && obj.OutputTextures.Length != 0)
+                {
+                    // Wrap this in a BeginHorizontal, so we can use FlexibleSpace to center the texture.
+                    EditorGUILayout.BeginHorizontal();
+                    GUILayout.FlexibleSpace();
+                    
+                    // Begin the BeginVertical block that will contain only the texture.
+                    Rect r = EditorGUILayout.BeginVertical(new GUILayoutOption[] {
+                            GUILayout.MinHeight(obj.OutputTextures[0].height),
+                            GUILayout.MinWidth(obj.OutputTextures[0].width),
+                    });
+
+                    // There's no EditorGUILayout for drawing textures.  Insert a space, to tell layout
+                    // about the space we need for the texture display.
+                    GUILayout.Space(obj.OutputTextures[0].height);
+
+                    Texture tex = obj.OutputTextures[DisplayedTexture];
+
+                    // Save the filter mode and switch to nearest neighbor to draw it in the editor.
+                    FilterMode SavedFilterMode = tex.filterMode;
+                    tex.filterMode = FilterMode.Point;
+                    if(ShowAlpha)
+                        EditorGUI.DrawTextureAlpha(r, tex, ScaleMode.ScaleToFit);
+                    else
+                        EditorGUI.DrawPreviewTexture(r, tex, null, ScaleMode.ScaleToFit);
+                    tex.filterMode = SavedFilterMode;
+                    
+                    EditorGUILayout.EndVertical();
+                    GUILayout.FlexibleSpace();
+                    EditorGUILayout.EndHorizontal();
+                }
+            }
         }
     }
 }
