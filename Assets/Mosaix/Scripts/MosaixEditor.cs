@@ -61,7 +61,6 @@ public class MosaixEditor: Editor
         {
             obj.MosaicMaterial = (Material) EditorGUILayout.ObjectField("Mosaic Material", obj.MosaicMaterial, typeof(Material), false);
             obj.ExpandEdgesShader = (Shader) EditorGUILayout.ObjectField("Expand Edges Shader", obj.ExpandEdgesShader, typeof(Shader), false);
-            obj.PremultiplyShader = (Shader) EditorGUILayout.ObjectField("Premultiply Shader", obj.PremultiplyShader, typeof(Shader), false);
         }
 
         obj.EditorSettings.ShowAdvanced = EditorGUILayout.Foldout(obj.EditorSettings.ShowAdvanced, "Advanced settings", true, boldFoldout);
@@ -80,30 +79,38 @@ public class MosaixEditor: Editor
 
             if(obj.EditorSettings.ShowDebugging)
             {
-                int NumTextures = obj.OutputTextures != null?  NumTextures = obj.OutputTextures.Length:0;
+                int NumTextures = obj.Passes != null?  NumTextures = obj.Passes.Count:0;
                 obj.EditorSettings.DisplayedTexture = EditorGUILayout.IntSlider("Texture", obj.EditorSettings.DisplayedTexture, 0, NumTextures-1);
 
                 obj.EditorSettings.ScaleTexture = EditorGUILayout.Toggle("Scale texture", obj.EditorSettings.ScaleTexture);
                 obj.EditorSettings.DisplayMode = (TextureDisplayMode) EditorGUILayout.EnumPopup("Display Mode", obj.EditorSettings.DisplayMode);
 
-                if(obj.OutputTextures != null && obj.OutputTextures.Length != 0)
+                if(obj.Passes != null && obj.Passes.Count != 0)
                 {
                     // Wrap this in a BeginHorizontal, so we can use FlexibleSpace to center the texture.
                     EditorGUILayout.BeginHorizontal();
                     GUILayout.FlexibleSpace();
                     
-                    // Begin the BeginVertical block that will contain only the texture.
+                    // Wrap in a BeginVertical.  This makes the space for the texture stay the same.  If ScaleTexture
+                    // is turned off, we want to make the texture display smaller, but not take up less space in the
+                    // UI or everything will move around constantly when changing textures.
+                    EditorGUILayout.BeginVertical(new GUILayoutOption[] {
+                            GUILayout.MinHeight(obj.Passes[0].Texture.height),
+                            GUILayout.MinWidth(obj.Passes[0].Texture.width),
+                    });
+
                     int ScaleTextureIndex = obj.EditorSettings.ScaleTexture? 0:obj.EditorSettings.DisplayedTexture;
+                    // Begin the BeginVertical block that will contain only the texture.
                     Rect r = EditorGUILayout.BeginVertical(new GUILayoutOption[] {
-                            GUILayout.MinHeight(obj.OutputTextures[ScaleTextureIndex].height),
-                            GUILayout.MinWidth(obj.OutputTextures[ScaleTextureIndex].width),
+                            GUILayout.MinHeight(obj.Passes[ScaleTextureIndex].Texture.height),
+                            GUILayout.MinWidth(obj.Passes[ScaleTextureIndex].Texture.width),
                     });
 
                     // There's no EditorGUILayout for drawing textures.  Insert a space, to tell layout
                     // about the space we need for the texture display.
-                    GUILayout.Space(obj.OutputTextures[ScaleTextureIndex].height);
+                    GUILayout.Space(obj.Passes[ScaleTextureIndex].Texture.height);
 
-                    Texture tex = obj.OutputTextures[obj.EditorSettings.DisplayedTexture];
+                    Texture tex = obj.Passes[obj.EditorSettings.DisplayedTexture].Texture;
 
                     // Save the filter mode and switch to nearest neighbor to draw it in the editor.
                     FilterMode SavedFilterMode = tex.filterMode;
@@ -135,6 +142,8 @@ public class MosaixEditor: Editor
                     EditorGUI.DrawPreviewTexture(r, tex, mat);
                     tex.filterMode = SavedFilterMode;
                     
+                    EditorGUILayout.EndVertical();
+
                     EditorGUILayout.EndVertical();
                     GUILayout.FlexibleSpace();
                     EditorGUILayout.EndHorizontal();

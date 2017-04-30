@@ -42,7 +42,7 @@ public class Mosaix: MonoBehaviour
     public float Alpha = 1;
 
     // The number of ExpandEdges passes to perform.
-    public int ExpandPasses = 4;
+    public int ExpandPasses = 1;
 
     public enum MaskMode
     {
@@ -74,10 +74,6 @@ public class Mosaix: MonoBehaviour
     // It can also be another material that calls the mosaic pass.
     public Material MosaicMaterial;
 
-    // The premultiply shader takes a regular texture and convert it to a premultiplied one.  This
-    // allows for much higher-quality downscaling, without bleeding black from empty pixels.
-    public Shader PremultiplyShader;
-
     // The real camera on the object this script is attached to.
     private Camera ThisCamera;
 
@@ -88,18 +84,29 @@ public class Mosaix: MonoBehaviour
 
     // This is an array of textures, starting at full size and progressively getting smaller towards the
     // mosaic size.
-    public RenderTexture[] OutputTextures;
-
-    // This is a spare texture with the same dimensions as the last OutputTextures, used for
-    // ExpandEdgesMaterial.
-    public RenderTexture ExpandTexture;
+    public enum PassType
+    {
+        Render,
+        Downscale,
+        Expand
+    };
+    public class ImagePass
+    {
+        public ImagePass(RenderTexture tex, PassType type)
+        {
+            Texture = tex;
+            Type = type;
+        }
+        public RenderTexture Texture;
+        public PassType Type;
+    };
+    public List<ImagePass> Passes = new List<ImagePass>();
 
     // These are settings only used by MosaixEditor.
     [System.NonSerialized]
     public MosaixEditor.EditorSettings EditorSettings = new MosaixEditor.EditorSettings();
 
     private Material ExpandEdgesMaterial;
-    private Material PremultiplyMaterial;
 
     private Dictionary<Renderer,Material[]> SavedMaterials = new Dictionary<Renderer,Material[]>();
 
@@ -107,11 +114,23 @@ public class Mosaix: MonoBehaviour
     {
         // When the script is added in the editor, set the default shaders and mosaic material.
         ExpandEdgesShader = Shader.Find("Hidden/Mosaix/ExpandEdges");
-        PremultiplyShader = Shader.Find("Hidden/Mosaix/Premultiply");
         MosaicMaterial = (Material) AssetDatabase.LoadAssetAtPath("Assets/Mosaix/Shaders/Mosaic.mat", typeof(Material));
     }
 
     static HashSet<Mosaix> EnabledMosaixScripts = new HashSet<Mosaix>();
+
+    // This stores the configuration we used to set up textures.  If this changes, we know we need
+    // to recreate our image passes.
+    struct Setup
+    {
+        public int RenderWidth, RenderHeight;
+        public int HorizontalMosaicBlocks;
+        public int VerticalMosaicBlocks;
+        public int ExpandPasses;
+        public int AntiAliasing;
+    };
+    Setup CurrentSetup;
+
     void OnEnable()
     {
         EnabledMosaixScripts.Add(this);
@@ -157,7 +176,6 @@ public class Mosaix: MonoBehaviour
 
         // Create materials for our shaders.
         ExpandEdgesMaterial = new Material(ExpandEdgesShader);
-        PremultiplyMaterial = new Material(PremultiplyShader);
 
         // Make a copy of the mosaic material.  We may be connected to a material used by multiple
         // instances of this script, and we need the properties we set to not affect the others.
@@ -233,27 +251,30 @@ public class Mosaix: MonoBehaviour
             CurrentHeight = VerticalMosaicBlocks;
         }
 
-        // If the render targets are already created and the resolution we want them to be hasn't changed,
-        // don't recreate them.
-        if(OutputTextures.Length != 0 &&
-            OutputTextures[0].width == CurrentWidth &&
-            OutputTextures[0].height == CurrentHeight &&
-            OutputTextures[OutputTextures.Length-1].width == HorizontalMosaicBlocks &&
-            OutputTextures[OutputTextures.Length-1].height == VerticalMosaicBlocks)
+        // Check if we actually need to recreate textures.
+        Setup NewSetup;
+        NewSetup.RenderWidth = CurrentWidth;
+        NewSetup.RenderHeight = CurrentHeight;
+        NewSetup.HorizontalMosaicBlocks = HorizontalMosaicBlocks;
+        NewSetup.VerticalMosaicBlocks = VerticalMosaicBlocks;
+        NewSetup.ExpandPasses = ExpandPasses;
+        NewSetup.AntiAliasing = ThisCamera.allowMSAA? QualitySettings.antiAliasing:0;
+        if(NewSetup.AntiAliasing == 0)
+            NewSetup.AntiAliasing = 1; // work around Unity inconsistency
+
+        if(CurrentSetup.Equals(NewSetup))
             return;
+        CurrentSetup = NewSetup;
 
         ReleaseTextures();
 
         // We'll render to the first texture, then blit each texture to the next to progressively
         // downscale it.
-        List<RenderTexture> Textures = new List<RenderTexture>();
-
         // The first texture is what we render into.  This is also the only texture that needs a depth buffer.
-        Textures.Add(new RenderTexture(CurrentWidth, CurrentHeight, 24));
+        Passes.Add(new ImagePass(new RenderTexture(CurrentWidth, CurrentHeight, 24), PassType.Render));
 
-        // The first copy only premultiplies alpha and doesn't downscale, so downscaling always
-        // happens on premultiplied alpha.
-        Textures.Add(new RenderTexture(CurrentWidth, CurrentHeight, 0));
+        // Match the scene antialiasing level.
+        Passes[Passes.Count-1].Texture.antiAliasing = NewSetup.AntiAliasing;
 
         // Create a texture for each downscale step.
         while(true)
@@ -266,34 +287,25 @@ public class Mosaix: MonoBehaviour
             CurrentHeight = Math.Max(CurrentHeight, VerticalMosaicBlocks);
 
             // If we've already reached the target resolution, we're done.
-            if(Textures[Textures.Count-1].width == CurrentWidth &&
-               Textures[Textures.Count-1].height == CurrentHeight)
+            if(Passes[Passes.Count-1].Texture.width == CurrentWidth &&
+               Passes[Passes.Count-1].Texture.height == CurrentHeight)
                 break;
 
-            Textures.Add(new RenderTexture(CurrentWidth, CurrentHeight, 0));
+            Passes.Add(new ImagePass(new RenderTexture(CurrentWidth, CurrentHeight, 0), PassType.Downscale));
         }
 
-        OutputTextures = Textures.ToArray();
-
-        // ExpandTexture is a temporary texture that ping pongs with the final low-resolution texture.
-        ExpandTexture = new RenderTexture(
-                OutputTextures[OutputTextures.Length - 1].width,
-                OutputTextures[OutputTextures.Length - 1].height, 0);
+        // Add the expand pass.
+        for(int pass = 0; pass < ExpandPasses; ++pass)
+            Passes.Add(new ImagePass(new RenderTexture(CurrentWidth, CurrentHeight, 0), PassType.Expand));
     }
 
     private void ReleaseTextures()
     {
-        if(OutputTextures != null)
+        if(Passes != null)
         {
-            foreach(RenderTexture texture in OutputTextures)
-                texture.Release();
-            OutputTextures = null;
-        }
-
-        if(ExpandTexture != null)
-        {
-            ExpandTexture.Release();
-            ExpandTexture = null;
+            foreach(ImagePass pass in Passes)
+                pass.Texture.Release();
+            Passes.Clear();
         }
     }
 
@@ -347,44 +359,43 @@ public class Mosaix: MonoBehaviour
             MosaicCamera.cullingMask =  (1 << MosaicLayer);
         }
 
-        // Match the projection matrix to the main camera, so we render the same thing even though
-        // the aspect ratio isn't exactly the same.
+        // Match the projection matrix to the main camera, so we render the same thing even if
+        // the aspect ratio of the RenderTexture isn't exactly the same as the screen.
         MosaicCamera.projectionMatrix = ThisCamera.projectionMatrix;
 
         MosaicCamera.renderingPath = ThisCamera.renderingPath;
         MosaicCamera.clearFlags = CameraClearFlags.SolidColor;
-        MosaicCamera.targetTexture = OutputTextures[0];
+        MosaicCamera.targetTexture = Passes[0].Texture;
 
         MosaicCamera.Render();
-
-        // Blit the image to progressively smaller textures to cleanly downscale it.
-        for(int i = 0; i < OutputTextures.Length - 1; ++i)
-        {
-            RenderTexture src = OutputTextures[i];
-            RenderTexture dst = OutputTextures[i+1];
-
-            // Stash the filter mode, and make sure it's set to bilinear for scaling.
-            FilterMode SavedFilterMode = src.filterMode;
-            src.filterMode = FilterMode.Bilinear;
-
-            // The first pass premultiplies alpha.
-            if(i == 0)
-                Graphics.Blit(src, dst, PremultiplyMaterial);
-            else
-                Graphics.Blit(src, dst);
-
-            // Restore the original filter mode.
-            src.filterMode = SavedFilterMode;
-        }
 
         // Now that we're done rendering the mosaic texture, undo any changes we just made to shadowCastingMode.
         foreach(KeyValuePair<Renderer,ShadowCastingMode> SavedShadowMode in DisabledRenderers)
             SavedShadowMode.Key.shadowCastingMode = SavedShadowMode.Value;
 
-        ExpandMosaic();
+        // Run each postprocessing pass.
+        for(int i = 1; i < Passes.Count; ++i)
+        {
+            RenderTexture src = Passes[i-1].Texture;
+            RenderTexture dst = Passes[i].Texture;
+
+            switch(Passes[i].Type)
+            {
+            case PassType.Downscale:
+                src.filterMode = FilterMode.Bilinear;
+                Graphics.Blit(src, dst);
+                break;
+
+            case PassType.Expand:
+                ExpandEdgesMaterial.SetVector("PixelUVStep", new Vector4(1.0f / src.width, 1.0f / src.height, 0, 0));
+                src.filterMode = FilterMode.Point;
+                Graphics.Blit(src, dst, ExpandEdgesMaterial);
+                break;
+            }
+        }
 
         // Draw the low-resolution texture with nearest neighbor sampling.
-        RenderTexture MosaicTex = OutputTextures[OutputTextures.Length-1];
+        RenderTexture MosaicTex = Passes[Passes.Count-1].Texture;
         MosaicTex.filterMode = FilterMode.Point;
         MosaicMaterial.SetTexture("MosaicTex", MosaicTex);
 
@@ -395,7 +406,7 @@ public class Mosaix: MonoBehaviour
         // HighResTex is the texture to sample where the mosaic is masked out.  If we're not rendering
         // in high resolution, this will be the same texture as the mosaic, so masking and alpha won't
         // do anything.
-        MosaicMaterial.SetTexture("HighResTex", OutputTextures[1]);
+        MosaicMaterial.SetTexture("HighResTex", Passes[0].Texture);
         MosaicMaterial.SetFloat("Alpha", Alpha);
         MosaicMaterial.SetTexture("MaskTex", MaskingTexture);
 
@@ -465,45 +476,6 @@ public class Mosaix: MonoBehaviour
         }
     }
 
-    void ExpandMosaic()
-    {
-        // The low resolution texture is missing some pixels right at the edge, where texture sampling
-        // sampled outside of opaque objects.  It's also possible for pixels well inside objects to not
-        // sample anything, if the mosaic is extremely coarse, though this usually only happens in extreme
-        // cases (eg. a 4x4 mosaic covering the entire screen).
-        //
-        // ExpandEdgesMaterial looks at each transparent pixel and searches the pixels immediately surrounding
-        // it for an opaque pixel.  Each pass will fill in another pixel outwards.  We usually don't need more
-        // than one or two passes, but these should be fairly cheap since it's operating on the low resolution
-        // mosaic texture.
-        //
-        // Each pass looks like this, with transparent pixels being set to an arbitrary neighboring pixel's
-        // color:
-        //
-        // ...... 1111.. 11111. 111111
-        // .11... 1111.. 111112 111112
-        // ...... 111122 111122 111122
-        // ....2. ...222 331222 331222
-        // ...... .33222 333222 333222
-        // ..3... .333.. 333332 333332
-        //
-        // This is the UV step the shader needs to advance to see the pixel adjacent to itself.  This is used
-        // to find a pixel inside the layer if it samples a pixel with no color.
-        Vector4 PixelUVStep = new Vector4(1.0f / ExpandTexture.width, 1.0f / ExpandTexture.height, 0, 0);
-
-        ExpandEdgesMaterial.SetVector("PixelUVStep", PixelUVStep);
-        for(int pass = 0; pass < ExpandPasses; ++pass)
-        {
-            // The last OutputTexture and ExpandTexture are the same size.  Blit from the texture to
-            // ExpandTexture to do one expand pass, then swap the two to make the expanded texture the
-            // final texture.
-            Graphics.Blit(OutputTextures[OutputTextures.Length - 1], ExpandTexture, ExpandEdgesMaterial);
-            RenderTexture tmp = ExpandTexture;
-            ExpandTexture = OutputTextures[OutputTextures.Length - 1];
-            OutputTextures[OutputTextures.Length - 1] = tmp;
-        }
-    }
-
     void OnPostRender()
     {
         // Restore the original materials.
@@ -512,10 +484,8 @@ public class Mosaix: MonoBehaviour
         SavedMaterials.Clear();
 
         // Discard the textures we rendered, since we don't need them anymore.
-        if(ExpandTexture != null)
-            ExpandTexture.DiscardContents();
-        foreach(RenderTexture texture in OutputTextures)
-            texture.DiscardContents();
+        foreach(ImagePass pass in Passes)
+            pass.Texture.DiscardContents();
     }
 };
 

@@ -63,15 +63,6 @@ SubShader {
             float2 uv = screenPos.xy / _ScreenParams.xy;
             fixed4 color1 = tex2D(MosaicTex, uv);
 
-            // The low-resolution mosaic texture has transparency from being filtered down, which we need
-            // to ignore or else the output will look transparent near edges.
-            // XXX: Should we do this in the ExpandEdges pass, so we only have to do it at the lower resolution?
-            if(color1.a > 0.001)
-            {
-                color1.rgb /= color1.a;
-                color1.a = 1;
-            }
-
             // If FADING is set, we'll sample the high-resolution texture as well, which allows us to fade
             // between mosaiced and non-mosaiced.
             float f = 1;
@@ -95,6 +86,16 @@ SubShader {
 
             fixed4 color2 = tex2D(HighResTex, uv);
             fixed4 color = color1*f + color2*(1-f);
+
+            // Ignore transparency at the edges due to antialiasing.  In the high-res texture this happens from
+            // MSAA, and since we're rendering with MSAA this will double-apply the antialiasing.  In the low-res
+            // texture this can happen from downsampling, and we don't want the mosaic to be transparent because
+            // it filtered in alpha.
+            if(color.a > 0.001)
+            {
+                color.rgb /= color.a;
+                color.a = 1;
+            }
             return color;
         }
         ENDCG
