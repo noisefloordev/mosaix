@@ -44,7 +44,9 @@ public class Mosaix: MonoBehaviour
 
     public float Alpha = 1;
 
-    // The number of ExpandEdges passes to perform.
+    // The number of ExpandEdges passes to perform.  This is normally always 1 and we only
+    // expose it for debugging.
+    [System.NonSerialized]
     public int ExpandPasses = 1;
 
     public enum MaskMode
