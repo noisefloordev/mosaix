@@ -68,8 +68,7 @@ See "Test scene\Mosaix example.unity" for an example.
 ![](Images/Setup_PutMeshInLayer.png)
 - Select your camera and add Component -> Effects -> Mosaix.
 - Set "Mosaic Layer" to the layer you created above.
-
-Play the scene, and the object will be mosaiced.
+- Play the scene.
 
 Settings
 --------
