@@ -1,9 +1,12 @@
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEditor;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 // Apply a mosaic to objects in a display layer.
 //
@@ -102,13 +105,14 @@ public class Mosaix: MonoBehaviour
     };
     public List<ImagePass> Passes = new List<ImagePass>();
 
-    // These are settings only used by MosaixEditor.
-    [System.NonSerialized]
-    public MosaixEditor.EditorSettings EditorSettings = new MosaixEditor.EditorSettings();
-
     private Material ExpandEdgesMaterial;
 
     private Dictionary<Renderer,Material[]> SavedMaterials = new Dictionary<Renderer,Material[]>();
+
+#if UNITY_EDITOR
+    // These are settings only used by MosaixEditor.
+    [System.NonSerialized]
+    public MosaixEditor.EditorSettings EditorSettings = new MosaixEditor.EditorSettings();
 
     void Reset()
     {
@@ -116,6 +120,7 @@ public class Mosaix: MonoBehaviour
         ExpandEdgesShader = Shader.Find("Hidden/Mosaix/ExpandEdges");
         MosaicMaterial = (Material) AssetDatabase.LoadAssetAtPath("Assets/Mosaix/Shaders/Mosaic.mat", typeof(Material));
     }
+#endif
 
     static HashSet<Mosaix> EnabledMosaixScripts = new HashSet<Mosaix>();
 

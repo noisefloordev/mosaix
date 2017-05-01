@@ -1,7 +1,11 @@
+// This isn't in an Editor directory due to Unity's broken compile order handling, which
+// makes it impossible to access Editor scripts from non-Editor scripts.  Instead, we just
+// conditionally compile this.
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 using System.Collections;
- 
+
 [CustomEditor(typeof(Mosaix))]
 public class MosaixEditor: Editor
 {
@@ -69,7 +73,7 @@ public class MosaixEditor: Editor
             obj.ShadowsCastOnMosaic = EditorGUILayout.Toggle("Shadows Cast On Mosaic", obj.ShadowsCastOnMosaic);
             obj.HighResolutionRender = EditorGUILayout.Toggle("High Resolution Render", obj.HighResolutionRender);
             obj.Alpha = EditorGUILayout.Slider("Alpha", obj.Alpha, 0, 1);
-            obj.ExpandPasses = EditorGUILayout.IntSlider("Expand Passes", obj.ExpandPasses, 0, 20);
+            obj.ExpandPasses = EditorGUILayout.IntSlider("Expand Passes", obj.ExpandPasses, 0, 5);
         }
 
         if(EditorApplication.isPlaying)
@@ -152,4 +156,5 @@ public class MosaixEditor: Editor
         }
     }
 }
- 
+#endif
+
