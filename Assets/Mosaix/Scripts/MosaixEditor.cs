@@ -59,13 +59,6 @@ public class MosaixEditor: Editor
 
         GUIStyle boldFoldout = new GUIStyle(EditorStyles.foldout);
         boldFoldout.fontStyle = FontStyle.Bold;
-        obj.EditorSettings.ShowShaders = EditorGUILayout.Foldout(obj.EditorSettings.ShowShaders, "Shaders", true, boldFoldout);
-
-        if(obj.EditorSettings.ShowShaders)
-        {
-            obj.MosaicMaterial = (Material) EditorGUILayout.ObjectField("Mosaic Material", obj.MosaicMaterial, typeof(Material), false);
-            obj.ExpandEdgesShader = (Shader) EditorGUILayout.ObjectField("Expand Edges Shader", obj.ExpandEdgesShader, typeof(Shader), false);
-        }
 
         obj.EditorSettings.ShowAdvanced = EditorGUILayout.Foldout(obj.EditorSettings.ShowAdvanced, "Advanced settings", true, boldFoldout);
         if(obj.EditorSettings.ShowAdvanced)
@@ -73,7 +66,14 @@ public class MosaixEditor: Editor
             obj.ShadowsCastOnMosaic = EditorGUILayout.Toggle("Shadows Cast On Mosaic", obj.ShadowsCastOnMosaic);
             obj.HighResolutionRender = EditorGUILayout.Toggle("High Resolution Render", obj.HighResolutionRender);
             obj.Alpha = EditorGUILayout.Slider("Alpha", obj.Alpha, 0, 1);
-            obj.ExpandPasses = EditorGUILayout.IntSlider("Expand Passes", obj.ExpandPasses, 0, 5);
+        }
+
+        obj.EditorSettings.ShowShaders = EditorGUILayout.Foldout(obj.EditorSettings.ShowShaders, "Shaders", true, boldFoldout);
+
+        if(obj.EditorSettings.ShowShaders)
+        {
+            obj.MosaicMaterial = (Material) EditorGUILayout.ObjectField("Mosaic Material", obj.MosaicMaterial, typeof(Material), false);
+            obj.ExpandEdgesShader = (Shader) EditorGUILayout.ObjectField("Expand Edges Shader", obj.ExpandEdgesShader, typeof(Shader), false);
         }
 
         if(EditorApplication.isPlaying)
@@ -83,6 +83,8 @@ public class MosaixEditor: Editor
 
             if(obj.EditorSettings.ShowDebugging)
             {
+                obj.ExpandPasses = EditorGUILayout.IntSlider("Expand Passes", obj.ExpandPasses, 0, 5);
+
                 int NumTextures = obj.Passes != null?  NumTextures = obj.Passes.Count:0;
                 obj.EditorSettings.DisplayedTexture = EditorGUILayout.IntSlider("Texture", obj.EditorSettings.DisplayedTexture, 0, NumTextures-1);
 
