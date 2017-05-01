@@ -273,10 +273,14 @@ public class Mosaix: MonoBehaviour
 
         ReleaseTextures();
 
+        // Use HDR textures if we're in linear color, otherwise use regular textures.  This way,
+        // we preserve HDR color through to the framebuffer.
+        RenderTextureFormat format = PlayerSettings.colorSpace == ColorSpace.Linear? RenderTextureFormat.DefaultHDR:RenderTextureFormat.Default;
+
         // We'll render to the first texture, then blit each texture to the next to progressively
         // downscale it.
         // The first texture is what we render into.  This is also the only texture that needs a depth buffer.
-        Passes.Add(new ImagePass(new RenderTexture(CurrentWidth, CurrentHeight, 24), PassType.Render));
+        Passes.Add(new ImagePass(new RenderTexture(CurrentWidth, CurrentHeight, 24, format), PassType.Render));
 
         // Match the scene antialiasing level.
         Passes[Passes.Count-1].Texture.antiAliasing = NewSetup.AntiAliasing;
@@ -296,12 +300,12 @@ public class Mosaix: MonoBehaviour
                Passes[Passes.Count-1].Texture.height == CurrentHeight)
                 break;
 
-            Passes.Add(new ImagePass(new RenderTexture(CurrentWidth, CurrentHeight, 0), PassType.Downscale));
+            Passes.Add(new ImagePass(new RenderTexture(CurrentWidth, CurrentHeight, 0, format), PassType.Downscale));
         }
 
         // Add the expand pass.
         for(int pass = 0; pass < ExpandPasses; ++pass)
-            Passes.Add(new ImagePass(new RenderTexture(CurrentWidth, CurrentHeight, 0), PassType.Expand));
+            Passes.Add(new ImagePass(new RenderTexture(CurrentWidth, CurrentHeight, 0, format), PassType.Expand));
     }
 
     private void ReleaseTextures()
