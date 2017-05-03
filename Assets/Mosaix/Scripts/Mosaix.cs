@@ -277,7 +277,7 @@ public class Mosaix: MonoBehaviour
 
         // Use HDR textures if we're in linear color, otherwise use regular textures.  This way,
         // we preserve HDR color through to the framebuffer.
-        RenderTextureFormat format = PlayerSettings.colorSpace == ColorSpace.Linear? RenderTextureFormat.DefaultHDR:RenderTextureFormat.Default;
+        RenderTextureFormat format = QualitySettings.activeColorSpace == ColorSpace.Linear? RenderTextureFormat.DefaultHDR:RenderTextureFormat.Default;
 
         // We'll render to the first texture, then blit each texture to the next to progressively
         // downscale it.
