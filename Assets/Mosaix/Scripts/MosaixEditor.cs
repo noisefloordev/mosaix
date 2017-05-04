@@ -27,6 +27,7 @@ public class MosaixEditor: Editor
     {
         public bool ShowShaders = false;
         public bool ShowMasking = false;
+        public bool ShowAnchoring = false;
         public bool ShowAdvanced = false;
         public bool ShowDebugging = false;
 
@@ -69,6 +70,16 @@ public class MosaixEditor: Editor
                 obj.MaskFade = EditorGUILayout.Slider("Mask Fade", obj.MaskFade, 0, 1);
                 --EditorGUI.indentLevel;
             }
+        }
+
+        obj.RenderScale = EditorGUILayout.Slider("Render Scale", obj.RenderScale, 1, 2);
+        obj.EditorSettings.ShowAnchoring = EditorGUILayout.Foldout(obj.EditorSettings.ShowAnchoring, "Anchoring", true, boldFoldout);
+        if(obj.EditorSettings.ShowAnchoring)
+        {
+            ++EditorGUI.indentLevel;
+            obj.AnchorTransform = (GameObject) EditorGUILayout.ObjectField("Anchor", obj.AnchorTransform, typeof(GameObject), true);
+            obj.ScaleMosaicToAnchorDistance = EditorGUILayout.Toggle("Scale mosaic size", obj.ScaleMosaicToAnchorDistance);
+            --EditorGUI.indentLevel;
         }
 
         obj.EditorSettings.ShowAdvanced = EditorGUILayout.Foldout(obj.EditorSettings.ShowAdvanced, "Advanced settings", true, boldFoldout);

@@ -37,6 +37,9 @@ SubShader {
         sampler2D HighResTex;
         float Alpha;
 
+        float4x4 FullTextureMatrix;
+        float4x4 MosaicTextureMatrix;
+
 #if TEXTURE_MASKING
         sampler2D MaskTex;
 #endif
@@ -62,12 +65,18 @@ SubShader {
 
         fixed4 frag(v2f i, UNITY_VPOS_TYPE screenPos : VPOS) : SV_Target
         {
-            // Sample the mosaic texture in screen space.
-            float2 uv = screenPos.xy / _ScreenParams.xy;
+            // Sample the mosaic texture in screen space.  FullUV is the texture coordinates in
+            // the full resolution texture (not shifted by the offset), and MosaicUV is the texture
+            // coordinates in the mosaic (shifted by the offset).  If OffsetX/OffsetY are 0,
+            // these are the same.
+            float2 ScreenSpaceUV = screenPos.xy / _ScreenParams.xy;
+            float2 FullUV = mul(FullTextureMatrix, float4(ScreenSpaceUV, 0, 1));
+            float2 MosaicUV = mul(MosaicTextureMatrix, float4(ScreenSpaceUV, 0, 1));
+
             float f = Alpha;
 
 #if TEXTURE_MASKING
-            f *= tex2D(MaskTex, i.uv);
+            f *= tex2D(MaskTex, i.FullUV);
 #endif
 
 #if SPHERE_MASKING
@@ -84,10 +93,10 @@ SubShader {
 #endif
 
             // Sample the mosaic.
-            fixed4 color1 = tex2D(MosaicTex, uv);
+            fixed4 color1 = tex2D(MosaicTex, MosaicUV);
 
             // Sample the high-res texture to fade/mask to it.
-            fixed4 color2 = tex2D(HighResTex, uv);
+            fixed4 color2 = tex2D(HighResTex, FullUV);
 
             // Blend between the mosaic and full texture.
             fixed4 color = color1*f + color2*(1-f);
