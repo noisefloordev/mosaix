@@ -49,16 +49,8 @@ public class Mosaix: MonoBehaviour
     [System.NonSerialized]
     public int ExpandPasses = 1;
 
-    public enum MaskMode
-    {
-        None,
-        Sphere,
-        Texture,
-    };
-
-    public MaskMode MaskingMode;
-
-    // MaskMode.Sphere only:
+    // Sphere masking:
+    public bool SphereMasking;
 
     // A sphere to define where to mosaic.  This sphere can be scaled, stretched and rotated
     // to adjust the shape of the mosaic.
@@ -69,7 +61,9 @@ public class Mosaix: MonoBehaviour
     // 20 world units away.
     public float MaskFade = 0.1f;
 
-    // MaskMode.Texture only:
+    // Texture masking:
+    public bool TextureMasking;
+
     public Texture MaskingTexture;
 
     // This shader copies the outermost edge of opaque pixels outwards.
@@ -276,7 +270,9 @@ public class Mosaix: MonoBehaviour
         ReleaseTextures();
 
         // Use HDR textures if we're in linear color, otherwise use regular textures.  This way,
-        // we preserve HDR color through to the framebuffer.
+        // we preserve HDR color through to the framebuffer.  Note that this assumes you're using
+        // linear color and HDR together.  You can use linear color without HDR, but that seems
+        // to be broken with RenderTexture.
         RenderTextureFormat format = QualitySettings.activeColorSpace == ColorSpace.Linear? RenderTextureFormat.DefaultHDR:RenderTextureFormat.Default;
 
         // We'll render to the first texture, then blit each texture to the next to progressively
@@ -419,14 +415,15 @@ public class Mosaix: MonoBehaviour
         // do anything.
         MosaicMaterial.SetTexture("HighResTex", Passes[0].Texture);
         MosaicMaterial.SetFloat("Alpha", Alpha);
-        MosaicMaterial.SetTexture("MaskTex", MaskingTexture);
 
         // Select whether we're using the texture masking shader, sphere masking, or no masking.
-        if(MaskingMode == MaskMode.Texture)
+        if(TextureMasking && MaskingTexture != null)
         {
             MosaicMaterial.EnableKeyword("TEXTURE_MASKING");
+            MosaicMaterial.SetTexture("MaskTex", MaskingTexture);
         }
-        else if(MaskingMode == MaskMode.Sphere)
+
+        if(SphereMasking && MaskingSphere != null)
         {
             MosaicMaterial.EnableKeyword("SPHERE_MASKING");
 

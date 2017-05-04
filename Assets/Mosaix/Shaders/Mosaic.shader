@@ -16,7 +16,8 @@ SubShader {
         #pragma vertex vert
         #pragma fragment frag
         #pragma target 3.0
-        #pragma multi_compile __ TEXTURE_MASKING SPHERE_MASKING
+        #pragma multi_compile __ TEXTURE_MASKING
+        #pragma multi_compile __ SPHERE_MASKING
 
         #include "UnityCG.cginc"
 
@@ -38,7 +39,9 @@ SubShader {
 
 #if TEXTURE_MASKING
         sampler2D MaskTex;
-#elif SPHERE_MASKING
+#endif
+
+#if SPHERE_MASKING
         float4x4 MaskMatrix;
         float MaskSizeOuter;
         float MaskSizeFactor;
@@ -61,15 +64,13 @@ SubShader {
         {
             // Sample the mosaic texture in screen space.
             float2 uv = screenPos.xy / _ScreenParams.xy;
-            fixed4 color1 = tex2D(MosaicTex, uv);
-
-            // If FADING is set, we'll sample the high-resolution texture as well, which allows us to fade
-            // between mosaiced and non-mosaiced.
-            float f = 1;
+            float f = Alpha;
 
 #if TEXTURE_MASKING
-            f = tex2D(MaskTex, i.uv);
-#elif SPHERE_MASKING
+            f *= tex2D(MaskTex, i.uv);
+#endif
+
+#if SPHERE_MASKING
             {
                 // If MASKING is enabled, use the mask matrix.
                 float3 TransformedWorld = mul(MaskMatrix, float4(i.world, 1));
@@ -77,14 +78,18 @@ SubShader {
                 // The distance between this fragment and the center of the mask control:
                 float dist = distance(TransformedWorld, float3(0,0,0));
 
-                f = (dist - MaskSizeOuter) * MaskSizeFactor;
-                f = clamp(f, 0, 1);
+                float sphere = (dist - MaskSizeOuter) * MaskSizeFactor;
+                f *= clamp(sphere, 0, 1);
             }
 #endif
 
-            f *= Alpha;
+            // Sample the mosaic.
+            fixed4 color1 = tex2D(MosaicTex, uv);
 
+            // Sample the high-res texture to fade/mask to it.
             fixed4 color2 = tex2D(HighResTex, uv);
+
+            // Blend between the mosaic and full texture.
             fixed4 color = color1*f + color2*(1-f);
 
             // Ignore transparency at the edges due to antialiasing.  In the high-res texture this happens from

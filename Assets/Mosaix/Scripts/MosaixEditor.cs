@@ -25,6 +25,7 @@ public class MosaixEditor: Editor
     public class EditorSettings
     {
         public bool ShowShaders = false;
+        public bool ShowMasking = false;
         public bool ShowAdvanced = false;
         public bool ShowDebugging = false;
 
@@ -38,42 +39,55 @@ public class MosaixEditor: Editor
         if(TextureDisplayMaterial == null)
             TextureDisplayMaterial = new Material(Shader.Find("Hidden/Mosaix/EditorTextureDisplay"));
 
+        GUIStyle boldFoldout = new GUIStyle(EditorStyles.foldout);
+        boldFoldout.fontStyle = FontStyle.Bold;
+
         Mosaix obj = (Mosaix) target;
+        Undo.RecordObject(obj, "Mosaix change");
         
         EditorGUILayout.LabelField("Basic settings", EditorStyles.boldLabel);
         obj.MosaicLayer = EditorGUILayout.LayerField("Mosaic Layer", obj.MosaicLayer);
         obj.MosaicBlocks = EditorGUILayout.IntSlider("Mosaic Blocks", obj.MosaicBlocks, 1, 100);
         
-        EditorGUILayout.LabelField("Masking", EditorStyles.boldLabel);
-        obj.MaskingMode = (Mosaix.MaskMode) EditorGUILayout.EnumPopup("Masking Mode", obj.MaskingMode);
-
-        if(obj.MaskingMode == Mosaix.MaskMode.Texture)
+        obj.EditorSettings.ShowMasking = EditorGUILayout.Foldout(obj.EditorSettings.ShowMasking, "Masking", true, boldFoldout);
+        if(obj.EditorSettings.ShowMasking)
         {
-            obj.MaskingTexture = (Texture) EditorGUILayout.ObjectField("Masking Texture", obj.MaskingTexture, typeof(Texture), true);
-        }
-        else if(obj.MaskingMode == Mosaix.MaskMode.Sphere)
-        {
-            obj.MaskingSphere = (GameObject) EditorGUILayout.ObjectField("Masking Sphere", obj.MaskingSphere, typeof(GameObject), true);
-            obj.MaskFade = EditorGUILayout.Slider("Mask Fade", obj.MaskFade, 0, 1);
-        }
+            obj.TextureMasking = EditorGUILayout.ToggleLeft("Texture masking", obj.TextureMasking);
+            if(obj.TextureMasking)
+            {
+                ++EditorGUI.indentLevel;
+                obj.MaskingTexture = (Texture) EditorGUILayout.ObjectField("Masking Texture", obj.MaskingTexture, typeof(Texture), true);
+                --EditorGUI.indentLevel;
+            }
 
-        GUIStyle boldFoldout = new GUIStyle(EditorStyles.foldout);
-        boldFoldout.fontStyle = FontStyle.Bold;
+            obj.SphereMasking = EditorGUILayout.ToggleLeft("Sphere masking", obj.SphereMasking);
+            if(obj.SphereMasking)
+            {
+                ++EditorGUI.indentLevel;
+                obj.MaskingSphere = (GameObject) EditorGUILayout.ObjectField("Masking Sphere", obj.MaskingSphere, typeof(GameObject), true);
+                obj.MaskFade = EditorGUILayout.Slider("Mask Fade", obj.MaskFade, 0, 1);
+                --EditorGUI.indentLevel;
+            }
+        }
 
         obj.EditorSettings.ShowAdvanced = EditorGUILayout.Foldout(obj.EditorSettings.ShowAdvanced, "Advanced settings", true, boldFoldout);
         if(obj.EditorSettings.ShowAdvanced)
         {
+            ++EditorGUI.indentLevel;
             obj.ShadowsCastOnMosaic = EditorGUILayout.Toggle("Shadows Cast On Mosaic", obj.ShadowsCastOnMosaic);
             obj.HighResolutionRender = EditorGUILayout.Toggle("High Resolution Render", obj.HighResolutionRender);
             obj.Alpha = EditorGUILayout.Slider("Alpha", obj.Alpha, 0, 1);
+            --EditorGUI.indentLevel;
         }
 
         obj.EditorSettings.ShowShaders = EditorGUILayout.Foldout(obj.EditorSettings.ShowShaders, "Shaders", true, boldFoldout);
 
         if(obj.EditorSettings.ShowShaders)
         {
+            ++EditorGUI.indentLevel;
             obj.MosaicMaterial = (Material) EditorGUILayout.ObjectField("Mosaic Material", obj.MosaicMaterial, typeof(Material), false);
             obj.ExpandEdgesShader = (Shader) EditorGUILayout.ObjectField("Expand Edges Shader", obj.ExpandEdgesShader, typeof(Shader), false);
+            --EditorGUI.indentLevel;
         }
 
         if(EditorApplication.isPlaying)
@@ -83,6 +97,7 @@ public class MosaixEditor: Editor
 
             if(obj.EditorSettings.ShowDebugging)
             {
+                ++EditorGUI.indentLevel;
                 obj.ExpandPasses = EditorGUILayout.IntSlider("Expand Passes", obj.ExpandPasses, 0, 5);
 
                 int NumTextures = obj.Passes != null?  NumTextures = obj.Passes.Count:0;
@@ -154,6 +169,7 @@ public class MosaixEditor: Editor
                     GUILayout.FlexibleSpace();
                     EditorGUILayout.EndHorizontal();
                 }
+                --EditorGUI.indentLevel;
             }
         }
     }
