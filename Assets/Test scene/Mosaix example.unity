@@ -118,7 +118,7 @@ GameObject:
   - component: {fileID: 241845599}
   - component: {fileID: 241845598}
   - component: {fileID: 241845596}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Mosaic mask
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -131,14 +131,14 @@ MeshRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 241845595}
-  m_Enabled: 0
+  m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 4265447a69f38d240afa997ac06ef63e, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -386,7 +386,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 4294966271
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -423,7 +423,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b0db6b1309ac6244854380e7cf4f436, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MosaicLayer: 1
+  MosaicLayer: 8
   MosaicBlocks: 37
   ShadowsCastOnMosaic: 1
   HighResolutionRender: 1
