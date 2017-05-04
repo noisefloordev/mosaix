@@ -99,7 +99,7 @@ public class Mosaix: MonoBehaviour
         public RenderTexture Texture;
         public PassType Type;
     };
-    public List<ImagePass> Passes = new List<ImagePass>();
+    private List<ImagePass> Passes = new List<ImagePass>();
 
     private Material ExpandEdgesMaterial;
 
@@ -115,6 +115,16 @@ public class Mosaix: MonoBehaviour
         // When the script is added in the editor, set the default shaders and mosaic material.
         ExpandEdgesShader = Shader.Find("Hidden/Mosaix/ExpandEdges");
         MosaicMaterial = (Material) AssetDatabase.LoadAssetAtPath("Assets/Mosaix/Shaders/Mosaic.mat", typeof(Material));
+    }
+
+    public List<RenderTexture> GetTexturePasses()
+    {
+        List<RenderTexture> TexturePasses = new List<RenderTexture>();
+
+        for(int i = 0; i < Passes.Count; ++i)
+            TexturePasses.Add(Passes[i].Texture);
+
+        return TexturePasses;
     }
 #endif
 

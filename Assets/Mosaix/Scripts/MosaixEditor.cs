@@ -5,6 +5,7 @@
 using UnityEditor;
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 [CustomEditor(typeof(Mosaix))]
 public class MosaixEditor: Editor
@@ -100,13 +101,15 @@ public class MosaixEditor: Editor
                 ++EditorGUI.indentLevel;
                 obj.ExpandPasses = EditorGUILayout.IntSlider("Expand Passes", obj.ExpandPasses, 0, 5);
 
-                int NumTextures = obj.Passes != null?  NumTextures = obj.Passes.Count:0;
+                List<RenderTexture> TexturePasses = obj.GetTexturePasses();
+                
+                int NumTextures = TexturePasses.Count;
                 obj.EditorSettings.DisplayedTexture = EditorGUILayout.IntSlider("Texture", obj.EditorSettings.DisplayedTexture, 0, NumTextures-1);
 
                 obj.EditorSettings.ScaleTexture = EditorGUILayout.Toggle("Scale texture", obj.EditorSettings.ScaleTexture);
                 obj.EditorSettings.DisplayMode = (TextureDisplayMode) EditorGUILayout.EnumPopup("Display Mode", obj.EditorSettings.DisplayMode);
 
-                if(obj.Passes != null && obj.Passes.Count != 0)
+                if(TexturePasses.Count != 0)
                 {
                     // Wrap this in a BeginHorizontal, so we can use FlexibleSpace to center the texture.
                     EditorGUILayout.BeginHorizontal();
@@ -116,22 +119,22 @@ public class MosaixEditor: Editor
                     // is turned off, we want to make the texture display smaller, but not take up less space in the
                     // UI or everything will move around constantly when changing textures.
                     EditorGUILayout.BeginVertical(new GUILayoutOption[] {
-                            GUILayout.MinHeight(obj.Passes[0].Texture.height),
-                            GUILayout.MinWidth(obj.Passes[0].Texture.width),
+                            GUILayout.MinHeight(TexturePasses[0].height),
+                            GUILayout.MinWidth(TexturePasses[0].width),
                     });
 
                     int ScaleTextureIndex = obj.EditorSettings.ScaleTexture? 0:obj.EditorSettings.DisplayedTexture;
                     // Begin the BeginVertical block that will contain only the texture.
                     Rect r = EditorGUILayout.BeginVertical(new GUILayoutOption[] {
-                            GUILayout.MinHeight(obj.Passes[ScaleTextureIndex].Texture.height),
-                            GUILayout.MinWidth(obj.Passes[ScaleTextureIndex].Texture.width),
+                            GUILayout.MinHeight(TexturePasses[ScaleTextureIndex].height),
+                            GUILayout.MinWidth(TexturePasses[ScaleTextureIndex].width),
                     });
 
                     // There's no EditorGUILayout for drawing textures.  Insert a space, to tell layout
                     // about the space we need for the texture display.
-                    GUILayout.Space(obj.Passes[ScaleTextureIndex].Texture.height);
+                    GUILayout.Space(TexturePasses[ScaleTextureIndex].height);
 
-                    Texture tex = obj.Passes[obj.EditorSettings.DisplayedTexture].Texture;
+                    Texture tex = TexturePasses[obj.EditorSettings.DisplayedTexture];
 
                     // Save the filter mode and switch to nearest neighbor to draw it in the editor.
                     FilterMode SavedFilterMode = tex.filterMode;
