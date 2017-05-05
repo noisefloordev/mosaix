@@ -164,7 +164,7 @@ public class Mosaix: MonoBehaviour
     //
     // This shouldn't be set too high.  If this is 2 and the user is at 1080p, this will create a 2160p
     // texture.  Values around 1.1 are best, to only sample a little bit near the edge.
-    public float RenderScale = 1;
+    public float RenderScale = 1.1f;
     private float ActualRenderScaleX = 1, ActualRenderScaleY = 1;
 
     private float HorizontalMosaicRatio = 1;

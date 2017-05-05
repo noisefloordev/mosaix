@@ -72,7 +72,6 @@ public class MosaixEditor: Editor
             }
         }
 
-        obj.RenderScale = EditorGUILayout.Slider("Render Scale", obj.RenderScale, 1, 2);
         obj.EditorSettings.ShowAnchoring = EditorGUILayout.Foldout(obj.EditorSettings.ShowAnchoring, "Anchoring", true, boldFoldout);
         if(obj.EditorSettings.ShowAnchoring)
         {
@@ -89,6 +88,7 @@ public class MosaixEditor: Editor
             obj.ShadowsCastOnMosaic = EditorGUILayout.Toggle("Shadows Cast On Mosaic", obj.ShadowsCastOnMosaic);
             obj.HighResolutionRender = EditorGUILayout.Toggle("High Resolution Render", obj.HighResolutionRender);
             obj.Alpha = EditorGUILayout.Slider("Alpha", obj.Alpha, 0, 1);
+            obj.RenderScale = EditorGUILayout.Slider("Render Scale", obj.RenderScale, 1, 2);
             --EditorGUI.indentLevel;
         }
 
