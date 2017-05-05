@@ -66,13 +66,6 @@ public class Mosaix: MonoBehaviour
 
     public Texture MaskingTexture;
 
-    // This shader copies the outermost edge of opaque pixels outwards.
-    public Shader ExpandEdgesShader;
-
-    // This material calls MosaicShader, which samples our low-resolution mosaic texture in screen space.
-    // It can also be another material that calls the mosaic pass.
-    public Material MosaicMaterial;
-
     // Anchoring
     //
     // If this is set, we'll shift the mosaic so this transform always lies on the intersection of two
@@ -83,12 +76,47 @@ public class Mosaix: MonoBehaviour
     // and smaller as it gets further away.
     public bool ScaleMosaicToAnchorDistance;
 
+    // This shader copies the outermost edge of opaque pixels outwards.
+    public Shader ExpandEdgesShader;
+    private Material ExpandEdgesMaterial;
+
+    // This material calls MosaicShader, which samples our low-resolution mosaic texture in screen space.
+    // It can also be another material that calls the mosaic pass.
+    public Material MosaicMaterial;
+
+    // A simple shader just used to copy from one texture to another:
+    public Shader BlitShader;
+    private Material BlitMaterial;
+
     // The number of pixels to offset the mosaic.  OffsetPixelsX 5 will shift the center of the mosaic
     // right by 5 pixels in screen space.  OffsetPixelsY 5 will shift the mosaic down by 5 pixels.
     private float OffsetPixelsX, OffsetPixelsY;
 
-    public Shader BlitShader;
-    private Material BlitMaterial;
+    // The amount of extra screen space to render in the texture.  If this is 1, the texture is drawn at
+    // exactly the size of the screen.  If 2, the texture is expanded by 2x.  The screen will still be
+    // drawn at exactly the same size in the center of the texture, but we'll have more pixels outwards.
+    //
+    // Setting this to a slightly higher value gives us extra pixels to sample for the mosaic at the edges
+    // of the screen.  This can reduce flicker due to bright parts of the object coming in and out of view,
+    // by keeping them "in view" of the mosaic even though they're actually offscreen.
+    //
+    // This also helps avoid artifacts from OffsetPixelsX/OffsetPixelsY.  If we're shifting the mosaic
+    // right by 10 pixels, then we want to have 10 pixels extra at the left to sample the left row of
+    // mosaic.  If the object fills the camera, those 10 pixels can be offscreen and we may have no pixels
+    // for that row.  ExpandEdges fixes this by expanding the next row outwards, but it can be conspicuous
+    // when a whole row is missing.
+    //
+    // This shouldn't be set too high.  If this is 2 and the user is at 1080p, this will create a 2160p
+    // texture.  Values around 1.1 are best, to only sample a little bit near the edge.
+    public float RenderScale = 1.1f;
+
+    // The RenderScale that we're actually applying.
+    private float ActualRenderScaleX = 1, ActualRenderScaleY = 1;
+
+    // If we're rendering a non-integer number of mosaic blocks, the mosaic is scaled down slightly in the
+    // texture.  If we're rendering 3.75 mosaic blocks, we render into a 4-pixel texture as if it's 3.75
+    // pixels wide, and this is the ratio we need to scale it.
+    private float HorizontalMosaicRatio = 1, VerticalMosaicRatio = 1;
 
     // The real camera on the object this script is attached to.
     private Camera ThisCamera;
@@ -118,8 +146,6 @@ public class Mosaix: MonoBehaviour
     };
     private List<ImagePass> Passes = new List<ImagePass>();
 
-    private Material ExpandEdgesMaterial;
-
     private Dictionary<Renderer,Material[]> SavedMaterials = new Dictionary<Renderer,Material[]>();
 
 #if UNITY_EDITOR
@@ -147,28 +173,6 @@ public class Mosaix: MonoBehaviour
 #endif
 
     static HashSet<Mosaix> EnabledMosaixScripts = new HashSet<Mosaix>();
-
-    // The amount of extra screen space to render in the texture.  If this is 1, the texture is drawn at
-    // exactly the size of the screen.  If 2, the texture is expanded by 2x.  The screen will still be
-    // drawn at exactly the same size in the center of the texture, but we'll have more pixels outwards.
-    //
-    // Setting this to a slightly higher value gives us extra pixels to sample for the mosaic at the edges
-    // of the screen.  This can reduce flicker due to bright parts of the object coming in and out of view,
-    // by keeping them "in view" of the mosaic even though they're actually offscreen.
-    //
-    // This also helps avoid artifacts from OffsetPixelsX/OffsetPixelsY.  If we're shifting the mosaic
-    // right by 10 pixels, then we want to have 10 pixels extra at the left to sample the left row of
-    // mosaic.  If the object fills the camera, those 10 pixels can be offscreen and we may have no pixels
-    // for that row.  ExpandEdges fixes this by expanding the next row outwards, but it can be conspicuous
-    // when a whole row is missing.
-    //
-    // This shouldn't be set too high.  If this is 2 and the user is at 1080p, this will create a 2160p
-    // texture.  Values around 1.1 are best, to only sample a little bit near the edge.
-    public float RenderScale = 1.1f;
-    private float ActualRenderScaleX = 1, ActualRenderScaleY = 1;
-
-    private float HorizontalMosaicRatio = 1;
-    private float VerticalMosaicRatio = 1;
 
     // This stores the configuration we used to set up textures.  If this changes, we know we need
     // to recreate our image passes.
@@ -265,11 +269,6 @@ public class Mosaix: MonoBehaviour
 	return Mathf.Floor((val + interval/2.0f)/interval) * interval;
     }
 
-    static float RoundUp(float val, float interval)
-    {
-	return Mathf.Ceil(val/interval) * interval;
-    }
-
     private void SetupTextures()
     {
         int Width = ThisCamera.pixelWidth;
@@ -281,19 +280,14 @@ public class Mosaix: MonoBehaviour
         // the texture we draw, so antialiasing stays the same.  If the screen is 100x100 and RenderScale
         // tells us to render at 103.5x103.5, round to the nearest even multiple of 2, 104x104x.
         {
-            float RenderWidth = Width * RenderScale;
-            float RenderHeight = Height * RenderScale;
+            float ExtraPixelsX = RoundToNearest(Width * (RenderScale-1), 2);
+            float ExtraPixelsY = RoundToNearest(Height * (RenderScale-1), 2);
 
-            // We round up to make sure that if RenderScale is 1 and we're in a window with an odd width,
-            // we don't round down.
-            RenderWidth = RoundUp(RenderWidth, 2);
-            RenderHeight = RoundUp(RenderHeight, 2);
+            ActualRenderScaleX = (Width+ExtraPixelsX) / Width;
+            ActualRenderScaleY = (Height+ExtraPixelsY) / Height;
 
-            ActualRenderScaleX = RenderWidth / Width;
-            ActualRenderScaleY = RenderHeight / Height;
-
-            Width = (int) RenderWidth;
-            Height = (int) RenderHeight;
+            Width += (int) ExtraPixelsX;
+            Height += (int) ExtraPixelsY;
         }
 
         // The number of actual horizontal and vertical blocks.  Scale this by RenderScale, so if the scale
@@ -389,7 +383,6 @@ public class Mosaix: MonoBehaviour
         // If we want 3.5 blocks and we're drawing into a 4x4 texture, we're drawing at 0.875 scale.
         HorizontalMosaicRatio = HorizontalMosaicBlocks / IntegerHorizontalMosaicBlocks;
         VerticalMosaicRatio = VerticalMosaicBlocks / IntegerVerticalMosaicBlocks;
-        //Debug.Log("... " + HorizontalMosaicBlocks);
         while(true)
         {
             // Each pass halves the resolution, except for the last pass which snaps to the
@@ -629,10 +622,8 @@ public class Mosaix: MonoBehaviour
             float OffsetPixelsV = -OffsetPixelsY / Passes[0].Texture.height;
             //Matrix4x4 MosaicTextureMatrix = TranslationMatrix(new Vector3(-OffsetPixelsU, -OffsetPixelsV, 0)) * FullTextureMatrix;
             Matrix4x4 MosaicTextureMatrix = Matrix4x4.identity;
-//        Debug.Log("ratio: " + HorizontalMosaicRatio + ", " + OffsetPixelsX + "x" + OffsetPixelsY);
             MosaicTextureMatrix *= ScaleMatrix(new Vector3(HorizontalMosaicRatio, VerticalMosaicRatio, 0));
             MosaicTextureMatrix *= TranslationMatrix(new Vector3(-OffsetPixelsU, -OffsetPixelsV, 0));
-
 
             // If we scaled the full resolution image, the mosaic is affected as well.
             MosaicTextureMatrix *= FullTextureMatrix;
