@@ -76,7 +76,7 @@ SubShader {
             float f = Alpha;
 
 #if TEXTURE_MASKING
-            f *= tex2D(MaskTex, i.FullUV);
+            f *= tex2D(MaskTex, i.uv);
 #endif
 
 #if SPHERE_MASKING
