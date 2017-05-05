@@ -1,3 +1,4 @@
+// This is a simple blit texture, like Graphics.Blit.
 Shader "Hidden/Mosaix/Blit" {
 Properties {
     _MainTex ("Base (RGB)", 2D) = "white" {}
@@ -6,9 +7,6 @@ Properties {
 SubShader {
     ZWrite Off
     ZTest Off
-
-    // This shader doesn't blend with anything.  We just search for a color in the source texture
-    // and copy it to the target.
     Blend One Zero
 
     Pass {  

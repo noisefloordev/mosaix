@@ -25,7 +25,7 @@ public class Mosaix: MonoBehaviour
 
     // The minimum number of mosaic blocks we want.  This will be adjusted upwards to keep the
     // blocks square.
-    public int MosaicBlocks = 16;
+    public float MosaicBlocks = 16;
     
     // If true, we'll render the mosaic texture with other objects casting shadows.  Turning this off may
     // be faster, but will result in the mosaic having no shadowing, which can cause it to be too bright
@@ -44,10 +44,10 @@ public class Mosaix: MonoBehaviour
 
     public float Alpha = 1;
 
-    // The number of ExpandEdges passes to perform.  This is normally always 1 and we only
-    // expose it for debugging.
+    // The number of ExpandEdges passes to perform.  This is normally only changed for debugging.
+    // One pass is usually enough, but if we have RenderScale enabled we may need two passes.
     [System.NonSerialized]
-    public int ExpandPasses = 1;
+    public int ExpandPasses = 2;
 
     // Sphere masking:
     public bool SphereMasking;
@@ -85,10 +85,10 @@ public class Mosaix: MonoBehaviour
 
     // The number of pixels to offset the mosaic.  OffsetPixelsX 5 will shift the center of the mosaic
     // right by 5 pixels in screen space.  OffsetPixelsY 5 will shift the mosaic down by 5 pixels.
-    public float OffsetPixelsX, OffsetPixelsY;
+    private float OffsetPixelsX, OffsetPixelsY;
 
     public Shader BlitShader;
-    public Material BlitMaterial;
+    private Material BlitMaterial;
 
     // The real camera on the object this script is attached to.
     private Camera ThisCamera;
@@ -131,6 +131,7 @@ public class Mosaix: MonoBehaviour
     {
         // When the script is added in the editor, set the default shaders and mosaic material.
         ExpandEdgesShader = Shader.Find("Hidden/Mosaix/ExpandEdges");
+        BlitShader = Shader.Find("Hidden/Mosaix/Blit");
         MosaicMaterial = (Material) AssetDatabase.LoadAssetAtPath("Assets/Mosaix/Shaders/Mosaic.mat", typeof(Material));
     }
 
@@ -166,13 +167,16 @@ public class Mosaix: MonoBehaviour
     public float RenderScale = 1;
     private float ActualRenderScaleX = 1, ActualRenderScaleY = 1;
 
+    private float HorizontalMosaicRatio = 1;
+    private float VerticalMosaicRatio = 1;
+
     // This stores the configuration we used to set up textures.  If this changes, we know we need
     // to recreate our image passes.
     struct Setup
     {
         public int RenderWidth, RenderHeight;
-        public int HorizontalMosaicBlocks;
-        public int VerticalMosaicBlocks;
+        public float HorizontalMosaicBlocks;
+        public float VerticalMosaicBlocks;
         public int ExpandPasses;
         public int AntiAliasing;
     };
@@ -295,8 +299,8 @@ public class Mosaix: MonoBehaviour
         // The number of actual horizontal and vertical blocks.  Scale this by RenderScale, so if the scale
         // is 2 (we're drawing a texture twice as big), we draw twice as many blocks and keep the blocks the
         // same size.
-        int HorizontalMosaicBlocks = (int) Math.Max(1, MosaicBlocks * ActualRenderScaleX);
-        int VerticalMosaicBlocks = (int) (HorizontalMosaicBlocks * ActualRenderScaleY);
+        float HorizontalMosaicBlocks = Math.Max(1, MosaicBlocks * ActualRenderScaleX);
+        float VerticalMosaicBlocks = HorizontalMosaicBlocks * ActualRenderScaleY;
 
         if(AnchorTransform != null && ScaleMosaicToAnchorDistance)
         {
@@ -306,8 +310,8 @@ public class Mosaix: MonoBehaviour
             Vector3 TransformPos = AnchorTransform.transform.position;
             Vector3 CameraPos = ThisCamera.transform.position;
             float Distance = Vector3.Distance(TransformPos, CameraPos);
-            HorizontalMosaicBlocks = (int) (HorizontalMosaicBlocks * Distance);
-            VerticalMosaicBlocks = (int) (VerticalMosaicBlocks * Distance);
+            HorizontalMosaicBlocks = HorizontalMosaicBlocks * Distance;
+            VerticalMosaicBlocks = VerticalMosaicBlocks * Distance;
         }
 
         // MosaicBlocks is the number of mosaic blocks we want to display.  However, the screen is probably not
@@ -317,12 +321,12 @@ public class Mosaix: MonoBehaviour
         if(Width < Height)
         {
             // The screen is taller than it is wide.  Decrease the number of blocks horizontally.
-            HorizontalMosaicBlocks = (int) Math.Round(VerticalMosaicBlocks * AspectRatio);
+            HorizontalMosaicBlocks = VerticalMosaicBlocks * AspectRatio;
         }
         else
         {
             // The screen is wider than it is tall.  Decrease the number of blocks vertically.
-            VerticalMosaicBlocks = (int) Math.Round(HorizontalMosaicBlocks / AspectRatio);
+            VerticalMosaicBlocks = HorizontalMosaicBlocks / AspectRatio;
         }
 
         // There's no point to these being higher than the display resolution.
@@ -338,8 +342,8 @@ public class Mosaix: MonoBehaviour
         // any rescaling passes below.
         if(!HighResolutionRender)
         {
-            CurrentWidth = HorizontalMosaicBlocks;
-            CurrentHeight = VerticalMosaicBlocks;
+            CurrentWidth = (int) HorizontalMosaicBlocks;
+            CurrentHeight = (int) VerticalMosaicBlocks;
         }
 
         // Check if we actually need to recreate textures.
@@ -374,14 +378,21 @@ public class Mosaix: MonoBehaviour
         Passes[Passes.Count-1].Texture.antiAliasing = NewSetup.AntiAliasing;
 
         // Create a texture for each downscale step.
+        int IntegerHorizontalMosaicBlocks = (int) Math.Ceiling(HorizontalMosaicBlocks);
+        int IntegerVerticalMosaicBlocks = (int) Math.Ceiling(VerticalMosaicBlocks);
+
+        // If we want 3.5 blocks and we're drawing into a 4x4 texture, we're drawing at 0.875 scale.
+        HorizontalMosaicRatio = HorizontalMosaicBlocks / IntegerHorizontalMosaicBlocks;
+        VerticalMosaicRatio = VerticalMosaicBlocks / IntegerVerticalMosaicBlocks;
+        //Debug.Log("... " + HorizontalMosaicBlocks);
         while(true)
         {
             // Each pass halves the resolution, except for the last pass which snaps to the
             // final resolution.
             CurrentWidth /= 2;
             CurrentHeight /= 2;
-            CurrentWidth = Math.Max(CurrentWidth, HorizontalMosaicBlocks);
-            CurrentHeight = Math.Max(CurrentHeight, VerticalMosaicBlocks);
+            CurrentWidth = (int) Math.Max(CurrentWidth, IntegerHorizontalMosaicBlocks);
+            CurrentHeight = (int) Math.Max(CurrentHeight, IntegerVerticalMosaicBlocks);
 
             // If we've already reached the target resolution, we're done.
             if(Passes[Passes.Count-1].Texture.width == CurrentWidth &&
@@ -426,6 +437,11 @@ public class Mosaix: MonoBehaviour
     static Matrix4x4 ScaleMatrix(Vector3 scale)
     {
         return Matrix4x4.TRS(Vector3.zero, Quaternion.identity, scale);
+    }
+
+    static float scale(float x, float l1, float h1, float l2, float h2)
+    {
+        return (x - l1) * (h2 - l2) / (h1 - l1) + l2;
     }
 
     void OnPreRender()
@@ -478,26 +494,33 @@ public class Mosaix: MonoBehaviour
         MosaicCamera.clearFlags = CameraClearFlags.SolidColor;
         MosaicCamera.targetTexture = Passes[0].Texture;
 
+        // Render the layers into our main temporary texture.  This will be HighResTex.
+        MosaicCamera.Render();
+
+        // Now that we're done rendering the mosaic texture, undo any changes we just made to shadowCastingMode.
+        foreach(KeyValuePair<Renderer,ShadowCastingMode> SavedShadowMode in DisabledRenderers)
+            SavedShadowMode.Key.shadowCastingMode = SavedShadowMode.Value;
+
         // If we have an AnchorTransform, see how many screen space pixels we should shift the resized texture
         // to keep the mosaic aligned with it.  We do this now so we can use MosaicCamera.projectionMatrix.
         // We use that instead of ThisCamera.projectionMatrix so it takes the render scale into account.
         if(AnchorTransform != null)
         {
-            Vector3 TransformPos = AnchorTransform.transform.position;
-
+            // Get the screen coordinates of the anchor.
             // see where the transform is in screen space, and set the offset so that lies on a mosaic intersection
-            Vector3 ScreenPos = MosaicCamera.WorldToScreenPoint(TransformPos);
+            Vector3 ScreenPos = MosaicCamera.WorldToScreenPoint(AnchorTransform.transform.position);
 
-            // Flip Y to account for Y being reversed.
-            ScreenPos.y = MosaicCamera.pixelHeight-ScreenPos.y;
+            // The size of the mosaic, in screen pixels:
+            float HorizontalMosaicSize = MosaicCamera.targetTexture.width / CurrentSetup.HorizontalMosaicBlocks;
+            float VerticalMosaicSize = MosaicCamera.targetTexture.height / CurrentSetup.VerticalMosaicBlocks;
 
-            float HorizontalMosaicSize = ((float)MosaicCamera.pixelWidth) / CurrentSetup.HorizontalMosaicBlocks;
-            float VerticalMosaicSize = ((float)MosaicCamera.pixelHeight) / CurrentSetup.VerticalMosaicBlocks;
-
+            // Figure out the offset needed to align the mosaic to the anchor.
             float HorizontalOffset = RoundToNearest(ScreenPos.x, HorizontalMosaicSize) - ScreenPos.x;
             float VerticalOffset = RoundToNearest(ScreenPos.y, VerticalMosaicSize) - ScreenPos.y;
+
+            // Our offsets are relative to the bottom-left of the screen.
             OffsetPixelsX = -HorizontalOffset;
-            OffsetPixelsY = -VerticalOffset;
+            OffsetPixelsY = +VerticalOffset;
 //            Debug.Log(ScreenPos.x + ", " + HorizontalOffset + ", " + HorizontalMosaicSize + ", " + OffsetPixelsX);
 //            Debug.Log(ScreenPos.y + ", " + VerticalOffset + ", " + VerticalMosaicSize + ", " + OffsetPixelsY);
         }
@@ -506,12 +529,6 @@ public class Mosaix: MonoBehaviour
             OffsetPixelsX = 0;
             OffsetPixelsY = 0;
         }
-
-        MosaicCamera.Render();
-
-        // Now that we're done rendering the mosaic texture, undo any changes we just made to shadowCastingMode.
-        foreach(KeyValuePair<Renderer,ShadowCastingMode> SavedShadowMode in DisabledRenderers)
-            SavedShadowMode.Key.shadowCastingMode = SavedShadowMode.Value;
 
         // Run each postprocessing pass.
         for(int i = 1; i < Passes.Count; ++i)
@@ -523,9 +540,10 @@ public class Mosaix: MonoBehaviour
             {
             case PassType.Downscale:
             {
-                // Graphics.Blit(src, dst);
                 src.filterMode = FilterMode.Bilinear;
 
+                // Set up BlitMaterial.  This is a simple texture that we only use for blitting.  Graphics.Blit
+                // doesn't give us any control, so we have to do the copies ourself.
                 BlitMaterial.SetTexture("_MainTex", src);
                 BlitMaterial.SetPass(0);
 
@@ -535,15 +553,31 @@ public class Mosaix: MonoBehaviour
                 GL.PushMatrix();
                 GL.LoadOrtho();
 
-                // If this is the first pass, apply the mosaic offset when we sample the high-res
-                // texture, which will be reversed by TextureMatrix.
-                float OffsetU = i == 1? (OffsetPixelsX / src.width):0;
-                float OffsetV = i == 1? (-OffsetPixelsY / src.width):0;
+                Vector2 BottomLeftUV = new Vector2(0,0);
+                Vector2 TopRightUV = new Vector2(1,1);
+
+                // Apply scaling and offsets on the first downscale pass.
+                if(i == 1)
+                {
+                    // MosaicRatio is the scale of the mosaic texture.  If this is 0.5, the mosaic will be
+                    // half the size of the texture (anchored bottom-left).  Apply this in the first downscale.
+                    TopRightUV.x *= 1/HorizontalMosaicRatio;
+                    TopRightUV.y *= 1/VerticalMosaicRatio;
+
+                    // Apply the mosaic offset in the first downscale by shifting UVs when sampling the render
+                    // buffer.  This will be reversed by TextureMatrix.  The render buffer always has pixels
+                    // 1:1 to the screen (even if we're expanding it at the edges), so this is always in pixels.
+                    float OffsetU = OffsetPixelsX / src.width;
+                    float OffsetV = -OffsetPixelsY / src.height;
+                    BottomLeftUV += new Vector2(OffsetU, OffsetV);
+                    TopRightUV += new Vector2(OffsetU, OffsetV);
+                }
+
                 GL.Begin(GL.QUADS);
-                GL.TexCoord2(1+OffsetU, 0+OffsetV); GL.Vertex3(1.0f, 0.0f, 0.1f);
-                GL.TexCoord2(0+OffsetU, 0+OffsetV); GL.Vertex3(0.0f, 0.0f, 0.1f);
-                GL.TexCoord2(0+OffsetU, 1+OffsetV); GL.Vertex3(0.0f, 1.0f, 0.1f);
-                GL.TexCoord2(1+OffsetU, 1+OffsetV); GL.Vertex3(1.0f, 1.0f, 0.1f);
+                GL.TexCoord2(TopRightUV.x,   BottomLeftUV.y); GL.Vertex3(1.0f, 0.0f, 0.1f);
+                GL.TexCoord2(BottomLeftUV.x, BottomLeftUV.y); GL.Vertex3(0.0f, 0.0f, 0.1f);
+                GL.TexCoord2(BottomLeftUV.x, TopRightUV.y);   GL.Vertex3(0.0f, 1.0f, 0.1f);
+                GL.TexCoord2(TopRightUV.x,   TopRightUV.y);   GL.Vertex3(1.0f, 1.0f, 0.1f);
                 GL.End();
                 GL.PopMatrix();
 
@@ -577,6 +611,8 @@ public class Mosaix: MonoBehaviour
         {
             Matrix4x4 FullTextureMatrix = Matrix4x4.identity;
 
+            // If we rendered the full frame at 2x resolution, use the texture matrix to scale UVs
+            // down by 0.5 to compensate.  Scale around the center of the texture, not the origin.
             FullTextureMatrix *= TranslationMatrix(new Vector3(0.5f, 0.5f, 0));
             FullTextureMatrix *= ScaleMatrix(new Vector3(1/ActualRenderScaleX,1/ActualRenderScaleY,1));
             FullTextureMatrix *= TranslationMatrix(new Vector3(-0.5f, -0.5f, 0));
@@ -584,9 +620,17 @@ public class Mosaix: MonoBehaviour
 
             // OffsetPixelsX/OffsetPixelsY shifted the texture in order to move where the center of
             // the mosaic blocks are.  Undo the shifting here, so it isn't actually shifted on screen.
-            float OffsetPixelsU = ((float) OffsetPixelsX) / Passes[0].Texture.width;
-            float OffsetPixelsV = ((float) -OffsetPixelsY) / Passes[0].Texture.height;
-            Matrix4x4 MosaicTextureMatrix = TranslationMatrix(new Vector3(-OffsetPixelsU, -OffsetPixelsV, 0)) * FullTextureMatrix;
+            float OffsetPixelsU = OffsetPixelsX / Passes[0].Texture.width;
+            float OffsetPixelsV = -OffsetPixelsY / Passes[0].Texture.height;
+            //Matrix4x4 MosaicTextureMatrix = TranslationMatrix(new Vector3(-OffsetPixelsU, -OffsetPixelsV, 0)) * FullTextureMatrix;
+            Matrix4x4 MosaicTextureMatrix = Matrix4x4.identity;
+//        Debug.Log("ratio: " + HorizontalMosaicRatio + ", " + OffsetPixelsX + "x" + OffsetPixelsY);
+            MosaicTextureMatrix *= ScaleMatrix(new Vector3(HorizontalMosaicRatio, VerticalMosaicRatio, 0));
+            MosaicTextureMatrix *= TranslationMatrix(new Vector3(-OffsetPixelsU, -OffsetPixelsV, 0));
+
+
+            // If we scaled the full resolution image, the mosaic is affected as well.
+            MosaicTextureMatrix *= FullTextureMatrix;
 
             MosaicMaterial.SetMatrix("MosaicTextureMatrix", MosaicTextureMatrix);
         }

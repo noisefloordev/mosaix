@@ -49,7 +49,7 @@ public class MosaixEditor: Editor
         
         EditorGUILayout.LabelField("Basic settings", EditorStyles.boldLabel);
         obj.MosaicLayer = EditorGUILayout.LayerField("Mosaic Layer", obj.MosaicLayer);
-        obj.MosaicBlocks = EditorGUILayout.IntSlider("Mosaic Blocks", obj.MosaicBlocks, 1, 100);
+        obj.MosaicBlocks = EditorGUILayout.Slider("Mosaic Blocks", obj.MosaicBlocks, 5, 100);
         
         obj.EditorSettings.ShowMasking = EditorGUILayout.Foldout(obj.EditorSettings.ShowMasking, "Masking", true, boldFoldout);
         if(obj.EditorSettings.ShowMasking)
@@ -99,6 +99,7 @@ public class MosaixEditor: Editor
             ++EditorGUI.indentLevel;
             obj.MosaicMaterial = (Material) EditorGUILayout.ObjectField("Mosaic Material", obj.MosaicMaterial, typeof(Material), false);
             obj.ExpandEdgesShader = (Shader) EditorGUILayout.ObjectField("Expand Edges Shader", obj.ExpandEdgesShader, typeof(Shader), false);
+            obj.BlitShader = (Shader) EditorGUILayout.ObjectField("Blit Shader", obj.BlitShader, typeof(Shader), false);
             --EditorGUI.indentLevel;
         }
 
