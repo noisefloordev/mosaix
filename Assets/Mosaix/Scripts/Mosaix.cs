@@ -361,6 +361,11 @@ public class Mosaix: MonoBehaviour
             return;
         CurrentSetup = NewSetup;
 
+        // Release the temporary textures we previously allocated.  Note that most of the time we come back here
+        // to recreate textures it's because the mosaic block size is changing (eg. because the anchor has moved),
+        // in which case most of the textures will be the same size, especially the large main render texture.
+        // Usually, the only thing that will change is how many low-resolution textures we allocate at the end
+        // of the pass list.
         ReleaseTextures();
 
         // Use HDR textures if we're in linear color, otherwise use regular textures.  This way,
@@ -372,7 +377,7 @@ public class Mosaix: MonoBehaviour
         // We'll render to the first texture, then blit each texture to the next to progressively
         // downscale it.
         // The first texture is what we render into.  This is also the only texture that needs a depth buffer.
-        Passes.Add(new ImagePass(new RenderTexture(CurrentWidth, CurrentHeight, 24, format), PassType.Render));
+        Passes.Add(new ImagePass(RenderTexture.GetTemporary(CurrentWidth, CurrentHeight, 24, format), PassType.Render));
 
         // Match the scene antialiasing level.
         Passes[Passes.Count-1].Texture.antiAliasing = NewSetup.AntiAliasing;
@@ -399,12 +404,12 @@ public class Mosaix: MonoBehaviour
                Passes[Passes.Count-1].Texture.height == CurrentHeight)
                 break;
 
-            Passes.Add(new ImagePass(new RenderTexture(CurrentWidth, CurrentHeight, 0, format), PassType.Downscale));
+            Passes.Add(new ImagePass(RenderTexture.GetTemporary(CurrentWidth, CurrentHeight, 0, format), PassType.Downscale));
         }
 
         // Add the expand pass.
         for(int pass = 0; pass < ExpandPasses; ++pass)
-            Passes.Add(new ImagePass(new RenderTexture(CurrentWidth, CurrentHeight, 0, format), PassType.Expand));
+            Passes.Add(new ImagePass(RenderTexture.GetTemporary(CurrentWidth, CurrentHeight, 0, format), PassType.Expand));
     }
 
     private void ReleaseTextures()
@@ -412,7 +417,7 @@ public class Mosaix: MonoBehaviour
         if(Passes != null)
         {
             foreach(ImagePass pass in Passes)
-                pass.Texture.Release();
+                RenderTexture.ReleaseTemporary(pass.Texture);
             Passes.Clear();
         }
     }
