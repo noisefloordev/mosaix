@@ -2,6 +2,8 @@ This is a Unity script to give clean mosaics.
 
 This code is in the public domain.
 
+[Demo video](https://s3.amazonaws.com/unity-mosaix/mosaix-demo.mp4)
+
 No bleeding with the scene
 --------------------------
 
@@ -45,6 +47,15 @@ of the teapot is blurred.  The cylinder can be scaled to fit the desired shape,
 and parented to the object or a character's skeleton so it follows the object.
 
 ![](Images/sphere_masked.png)
+
+Mosaic anchoring
+----------------
+
+The mosaic can be anchored to an object.  When the object moves, the mosaic will shift
+with it, making the motion of the object clearer.  Optionally, the mosaic can also scale
+with the object, so the mosaic gets finer as the object gets further away.
+
+[Anchoring demo](https://s3.amazonaws.com/unity-mosaix/anchoring-demo.mp4)
 
 Integrating with cartoon outline shaders
 ----------------------------------------
@@ -123,4 +134,24 @@ for an example.  By creating your own shader that calls the mosaic shader with U
 you can integrate other effects on top of the mosaic, such as cartoon outlines.  Assign
 your alternate shader to a material, and set that material as the Mosaic Material inside
 the Shaders section of the script.
+
+Anchoring
+---------
+
+To anchor the mosaic so it locks to an object, connect a transform to Anchor.
+
+[A demo for this effect can be found here.](https://s3.amazonaws.com/unity-mosaix/anchoring-demo.mp4)
+
+This causes the mosaic lines to align themselves to the object, which can make motion underneath
+the mosaic easier to see.
+
+If **Scale mosaic size** is turned on, the mosaic will also scale itself as the anchor gets
+further and closer to the camera.  This allows the mosaic to be smaller when the object is
+far from the camera and finer as the object is closer to the camera.
+
+Note that **Scale mosaic size** can cause additional flicker as the size of the mosaic changes,
+especially with bright specular highlights.  Anchoring to something that doesn't move too much
+can reduce this.  For example, if you're mosaicing a character's eyes and want the mosaic to
+zoom as the character comes closer to the character, putting the anchor on the character's root
+joint instead of on his face may cause less flicker, but still give reasonable mosaic scaling.
 
