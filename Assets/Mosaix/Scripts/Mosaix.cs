@@ -367,11 +367,15 @@ public class Mosaix: MonoBehaviour
         // of the pass list.
         ReleaseTextures();
 
-        // Use HDR textures if we're in linear color, otherwise use regular textures.  This way,
-        // we preserve HDR color through to the framebuffer.  Note that this assumes you're using
-        // linear color and HDR together.  You can use linear color without HDR, but that seems
-        // to be broken with RenderTexture.
-        RenderTextureFormat format = QualitySettings.activeColorSpace == ColorSpace.Linear? RenderTextureFormat.DefaultHDR:RenderTextureFormat.Default;
+        // If Unity is rendering into an HDR texture for postprocessing, we want to render HDR too to pass it
+        // through.  Do this if we're in linear color space and the camera's allowHDR flag is enabled.
+        //
+        // If there are no image effects enabled and Camera.forceIntoRenderTexture is false Unity will actually
+        // just render sRGB and it'd be better for us to too, but there's no obvious way to ask Unity whether
+        // it's rendering a camera into an HDR texture in OnPreRender.
+        RenderTextureFormat format = QualitySettings.activeColorSpace == ColorSpace.Linear && ThisCamera.allowHDR?
+            RenderTextureFormat.DefaultHDR:
+            RenderTextureFormat.Default;
 
         // We'll render to the first texture, then blit each texture to the next to progressively
         // downscale it.
@@ -538,6 +542,9 @@ public class Mosaix: MonoBehaviour
         {
             RenderTexture src = Passes[i-1].Texture;
             RenderTexture dst = Passes[i].Texture;
+
+            // This doesn't happen automatically.  We have to enable sRGBWrite manually.
+            GL.sRGBWrite = dst.sRGB;
 
             switch(Passes[i].Type)
             {
