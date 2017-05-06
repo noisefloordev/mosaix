@@ -64,7 +64,7 @@ SubShader {
             return o;
         }
 
-        fixed4 frag(v2f i, UNITY_VPOS_TYPE screenPos : VPOS) : SV_Target
+        half4 frag(v2f i, UNITY_VPOS_TYPE screenPos : VPOS) : SV_Target
         {
             // Sample the mosaic texture in screen space.  FullUV is the texture coordinates in
             // the full resolution texture (not shifted by the offset), and MosaicUV is the texture
@@ -94,17 +94,17 @@ SubShader {
 #endif
 
 #if SHOW_MASK
-            return fixed4(f, f, f, 1);
+            return half4(f, f, f, 1);
 #endif
 
             // Sample the mosaic.
-            fixed4 color1 = tex2D(MosaicTex, MosaicUV);
+            half4 color1 = tex2D(MosaicTex, MosaicUV);
 
             // Sample the high-res texture to fade/mask to it.
-            fixed4 color2 = tex2D(HighResTex, FullUV);
+            half4 color2 = tex2D(HighResTex, FullUV);
 
             // Blend between the mosaic and full texture.
-            fixed4 color = color1*f + color2*(1-f);
+            half4 color = color1*f + color2*(1-f);
 
             // Ignore transparency at the edges due to antialiasing.  In the high-res texture this happens from
             // MSAA, and since we're rendering with MSAA this will double-apply the antialiasing.  In the low-res

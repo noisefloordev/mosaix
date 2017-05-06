@@ -59,7 +59,7 @@ SubShader {
         
 #define SAMPLE(X,Y) tex2D(_MainTex, i.texcoord + float2(PixelUVStep.x * X, PixelUVStep.x * Y))
 
-        fixed4 GetPixel(v2f i) : SV_Target
+        half4 GetPixel(v2f i) : SV_Target
         {
             // Sample the four neighboring pixels around this one and add them.  Note that
             // these values are premultiplied.
@@ -81,7 +81,7 @@ SubShader {
             neighbors /= max(1, neighbors.a);
 
             // Sample the main pixel.
-            fixed4 col = SAMPLE(0,0);
+            half4 col = SAMPLE(0,0);
 
             // Mix the neighboring pixels with the pixel itself.  If the color already has an alpha of 1
             // then this will discard the neighbor samples.  If it has an alpha of 0 then it'll use the
@@ -92,9 +92,9 @@ SubShader {
             return neighbors*(1-col.a) + col;
         }
 
-        fixed4 frag(v2f i) : SV_Target
+        half4 frag(v2f i) : SV_Target
         {
-            fixed4 col = GetPixel(i);
+            half4 col = GetPixel(i);
             return col;
         }
         ENDCG

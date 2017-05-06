@@ -38,7 +38,7 @@ SubShader {
             return o;
         }
         
-        fixed4 frag(v2f i) : SV_Target
+        half4 frag(v2f i) : SV_Target
         {
             return tex2D(_MainTex, i.texcoord);
         }
