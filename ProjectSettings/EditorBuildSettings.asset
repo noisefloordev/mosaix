@@ -6,5 +6,5 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Test scene/Mosaix example.unity
-    guid: a32d2fd8fa69526428d87a20ffe9e20b
+    path: Assets/Demo/Demo scene.unity
+    guid: 1a4a4513f66815c438378c78e3631a6c
