@@ -105,6 +105,7 @@ public class DemoGUI: MonoBehaviour
         }
 
         MosaixComponent.TextureMasking = GUILayout.Toggle(MosaixComponent.TextureMasking, "Texture masking");
+        MosaixComponent.ShowMask = GUILayout.Toggle(MosaixComponent.ShowMask, "Show mask");
     }
 
     int level = 0;

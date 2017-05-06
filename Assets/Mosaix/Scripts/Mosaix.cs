@@ -49,6 +49,10 @@ public class Mosaix: MonoBehaviour
     [System.NonSerialized]
     public int ExpandPasses = 2;
 
+    // If true, we'll render the mask rather than the real texture.
+    [System.NonSerialized]
+    public bool ShowMask = false;
+
     // Sphere masking:
     public bool SphereMasking;
 
@@ -644,6 +648,9 @@ public class Mosaix: MonoBehaviour
             MosaicMaterial.SetMatrix("MosaicTextureMatrix", MosaicTextureMatrix);
         }
 
+        if(ShowMask)
+            MosaicMaterial.EnableKeyword("SHOW_MASK");
+        
         // Select whether we're using the texture masking shader, sphere masking, or no masking.
         if(TextureMasking && MaskingTexture != null)
         {

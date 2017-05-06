@@ -153,6 +153,13 @@ public class MosaixEditor: Editor
             if(obj.EditorSettings.ShowDebugging)
             {
                 ++EditorGUI.indentLevel;
+
+                obj.ShowMask = EditorGUILayout.ToggleLeft(new GUIContent("Show mask",
+                            "Enable to show the texture mask.\n" +
+                            "\n" +
+                            "This renders the mask in the viewport for debugging."),
+                        obj.ShowMask);
+
                 obj.ExpandPasses = EditorGUILayout.IntSlider("Expand Passes", obj.ExpandPasses, 0, 5);
 
                 List<RenderTexture> TexturePasses = obj.GetTexturePasses();

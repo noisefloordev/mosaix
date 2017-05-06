@@ -18,6 +18,7 @@ SubShader {
         #pragma target 3.0
         #pragma multi_compile __ TEXTURE_MASKING
         #pragma multi_compile __ SPHERE_MASKING
+        #pragma multi_compile __ SHOW_MASK
 
         #include "UnityCG.cginc"
 
@@ -90,6 +91,10 @@ SubShader {
                 float sphere = (dist - MaskSizeOuter) * MaskSizeFactor;
                 f *= clamp(sphere, 0, 1);
             }
+#endif
+
+#if SHOW_MASK
+            return fixed4(f, f, f, 1);
 #endif
 
             // Sample the mosaic.
