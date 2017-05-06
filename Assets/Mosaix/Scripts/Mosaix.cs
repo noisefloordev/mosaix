@@ -293,8 +293,7 @@ public class Mosaix: MonoBehaviour
         // The number of actual horizontal and vertical blocks.  Scale this by RenderScale, so if the scale
         // is 2 (we're drawing a texture twice as big), we draw twice as many blocks and keep the blocks the
         // same size.
-        float HorizontalMosaicBlocks = Math.Max(1, MosaicBlocks * ActualRenderScaleX);
-        float VerticalMosaicBlocks = HorizontalMosaicBlocks * ActualRenderScaleY;
+        float HorizontalMosaicBlocks = MosaicBlocks * ActualRenderScaleX;
 
         if(AnchorTransform != null && ScaleMosaicToAnchorDistance)
         {
@@ -305,8 +304,14 @@ public class Mosaix: MonoBehaviour
             Vector3 CameraPos = ThisCamera.transform.position;
             float Distance = Vector3.Distance(TransformPos, CameraPos);
             HorizontalMosaicBlocks = HorizontalMosaicBlocks * Distance;
-            VerticalMosaicBlocks = VerticalMosaicBlocks * Distance;
         }
+
+        float VerticalMosaicBlocks = HorizontalMosaicBlocks * ActualRenderScaleY;
+
+        // Make sure neither dimension is zero, and avoid 1 since it avoids some visual issues that
+        // I haven't tracked down.
+        HorizontalMosaicBlocks = Math.Max(2, HorizontalMosaicBlocks);
+        VerticalMosaicBlocks = Math.Max(2, VerticalMosaicBlocks);
 
         // MosaicBlocks is the number of mosaic blocks we want to display.  However, the screen is probably not
         // square and we want the mosaic blocks to be square.  Adjust the number of blocks to fix this.
