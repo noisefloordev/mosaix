@@ -543,10 +543,11 @@ public class Mosaix: MonoBehaviour
                 // Set up BlitMaterial.  This is a simple texture that we only use for blitting.  Graphics.Blit
                 // doesn't give us any control, so we have to do the copies ourself.
                 BlitMaterial.SetTexture("_MainTex", src);
-                BlitMaterial.SetPass(0);
 
                 RenderTexture SavedActiveRenderTexture = RenderTexture.active;
                 RenderTexture.active = dst;
+
+                BlitMaterial.SetPass(0);
 
                 GL.PushMatrix();
                 GL.LoadOrtho();
