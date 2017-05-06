@@ -48,13 +48,23 @@ public class MosaixEditor: Editor
         Undo.RecordObject(obj, "Mosaix change");
         
         EditorGUILayout.LabelField("Basic settings", EditorStyles.boldLabel);
-        obj.MosaicLayer = EditorGUILayout.LayerField("Mosaic Layer", obj.MosaicLayer);
-        obj.MosaicBlocks = EditorGUILayout.Slider("Mosaic Blocks", obj.MosaicBlocks, 5, 100);
+        obj.MosaicLayer = EditorGUILayout.LayerField(new GUIContent("Mosaic Layer",
+                    "Select the display layer to be mosaiced.\n" +
+                    "\n" +
+                    "Objects in the selected layer will be mosaiced."), obj.MosaicLayer);
+        obj.MosaicBlocks = EditorGUILayout.Slider(new GUIContent("Mosaic Blocks",
+                    "Set the number of blocks the mosaic should have.\n" +
+                    "\n" +
+                    "If Anchor Scaling is enabled, this will be scaled by the distance from the " +
+                    "camera to the anchor."), obj.MosaicBlocks, 2, 500);
         
         obj.EditorSettings.ShowMasking = EditorGUILayout.Foldout(obj.EditorSettings.ShowMasking, "Masking", true, boldFoldout);
         if(obj.EditorSettings.ShowMasking)
         {
-            obj.TextureMasking = EditorGUILayout.ToggleLeft("Texture masking", obj.TextureMasking);
+            obj.TextureMasking = EditorGUILayout.ToggleLeft(new GUIContent("Texture masking",
+                        "Enable to turn on texture masking.\n" +
+                        "\n" +
+                        "Select a masking texture.  The objects will be mosaiced where the texture is white."), obj.TextureMasking);
             if(obj.TextureMasking)
             {
                 ++EditorGUI.indentLevel;
@@ -62,12 +72,21 @@ public class MosaixEditor: Editor
                 --EditorGUI.indentLevel;
             }
 
-            obj.SphereMasking = EditorGUILayout.ToggleLeft("Sphere masking", obj.SphereMasking);
+            obj.SphereMasking = EditorGUILayout.ToggleLeft(new GUIContent("Sphere masking",
+                        "Enable to turn on sphere masking.  Objects will be mosaiced only within a sphere."), obj.SphereMasking);
             if(obj.SphereMasking)
             {
                 ++EditorGUI.indentLevel;
-                obj.MaskingSphere = (GameObject) EditorGUILayout.ObjectField("Masking Sphere", obj.MaskingSphere, typeof(GameObject), true);
-                obj.MaskFade = EditorGUILayout.Slider("Mask Fade", obj.MaskFade, 0, 1);
+                obj.MaskingSphere = (GameObject) EditorGUILayout.ObjectField(new GUIContent("Masking Sphere",
+                            "Connect a sphere mesh.  Objects sphere will be mosaiced only inside the sphere.\n" +
+                            "\n" +
+                            "The sphere mesh may be scaled on each axis separately to mosaic within an oblong area."),
+                        obj.MaskingSphere, typeof(GameObject), true);
+                obj.MaskFade = EditorGUILayout.Slider(new GUIContent("Mask Fade",
+                            "The amount to fade the mosaic out around the sphere.\n" +
+                            "\n" +
+                            "At 0, the mosaic will cut off sharply at the edge of the sphere.\n" +
+                            "At 1, the mosaic will fade off for the diameter of the sphere."), obj.MaskFade, 0, 1);
                 --EditorGUI.indentLevel;
             }
         }
@@ -77,7 +96,12 @@ public class MosaixEditor: Editor
         {
             ++EditorGUI.indentLevel;
             obj.AnchorTransform = (GameObject) EditorGUILayout.ObjectField("Anchor", obj.AnchorTransform, typeof(GameObject), true);
-            obj.ScaleMosaicToAnchorDistance = EditorGUILayout.Toggle("Scale mosaic size", obj.ScaleMosaicToAnchorDistance);
+            obj.ScaleMosaicToAnchorDistance = EditorGUILayout.Toggle(new GUIContent("Scale mosaic size",
+                    "If enabled, the mosaic will get bigger as the anchor gets closer to the camera.\n" +
+                    "\n" +
+                    "If the anchor is further than 1 unit from the camera, the mosaic will use smaller " +
+                    "blocks, and if it's closer than 1 unit it'll use bigger blocks."),
+                    obj.ScaleMosaicToAnchorDistance);
             --EditorGUI.indentLevel;
         }
 
@@ -85,10 +109,28 @@ public class MosaixEditor: Editor
         if(obj.EditorSettings.ShowAdvanced)
         {
             ++EditorGUI.indentLevel;
-            obj.ShadowsCastOnMosaic = EditorGUILayout.Toggle("Shadows Cast On Mosaic", obj.ShadowsCastOnMosaic);
-            obj.HighResolutionRender = EditorGUILayout.Toggle("High Resolution Render", obj.HighResolutionRender);
-            obj.Alpha = EditorGUILayout.Slider("Alpha", obj.Alpha, 0, 1);
-            obj.RenderScale = EditorGUILayout.Slider("Render Scale", obj.RenderScale, 1, 2);
+            obj.ShadowsCastOnMosaic = EditorGUILayout.Toggle(new GUIContent("Shadows Cast On Mosaic",
+                        "If on (recommended), non-mosaiced objects will cast shadows on mosaiced objects.\n" +
+                        "\n" +
+                        "If off, non-mosaiced objects will be hidden with display layers while rendering " +
+                        "the objects, and won't cast shadowed on them."), obj.ShadowsCastOnMosaic);
+            obj.HighResolutionRender = EditorGUILayout.Toggle(new GUIContent("High Resolution Render",
+                        "If on, objects are rendered normally and then downscaled to create the mosaic.\n" +
+                        "If off, objects are rendered at the mosaic resolution.\n" +
+                        "\n" +
+                        "If this is off, alpha and masking won't have a high resolution texture to use," +
+                        "and will mask to a blurry texture instead.  Lighting may also be lower quality."),
+                    obj.HighResolutionRender);
+            obj.Alpha = EditorGUILayout.Slider(new GUIContent("Alpha",
+                        "Fade out the mosaic."),
+                    obj.Alpha, 0, 1);
+            obj.RenderScale = EditorGUILayout.Slider(new GUIContent("Render Scale",
+                        "The amount to render outside of the visible area.\n" +
+                        "\n" +
+                        "At 0, only the viewport is rendered.  At 0.5, 50% extra screen space is rendered." +
+                        "A value of 0.1 is recommended.  This gives the mosaic a little extra screen space to " +
+                        "sample, which reduces flicker when objects are near the edge of the screen."),
+                    obj.RenderScale, 1, 2);
             --EditorGUI.indentLevel;
         }
 
