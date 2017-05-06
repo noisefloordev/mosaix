@@ -1,8 +1,10 @@
 This is a Unity script to give clean mosaics.
 
-This code is in the public domain.
+**[Live WebGL demo](https://s3.amazonaws.com/unity-mosaix/demo/index.html)**
 
 [Demo video](https://s3.amazonaws.com/unity-mosaix/mosaix-demo.mp4)
+
+This code is in the public domain.
 
 No bleeding with the scene
 --------------------------
