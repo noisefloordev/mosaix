@@ -1,10 +1,16 @@
 fileFormatVersion: 2
 guid: 5b0db6b1309ac6244854380e7cf4f436
-timeCreated: 1492991584
+timeCreated: 1494109225
 licenseType: Free
 MonoImporter:
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - MaskingSphere: {instanceID: 0}
+  - MaskingTexture: {instanceID: 0}
+  - AnchorTransform: {instanceID: 0}
+  - ExpandEdgesShader: {fileID: 4800000, guid: 9666abf06efb7ae4981250b02600200c, type: 3}
+  - MosaicMaterial: {fileID: 2100000, guid: 0a8015bb40b2d2a429a5dabcce71e8e3, type: 2}
+  - BlitShader: {fileID: 4800000, guid: d7f50eff2b8e934428a6c4e7a1db26df, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

@@ -157,14 +157,6 @@ public class Mosaix: MonoBehaviour
     [System.NonSerialized]
     public MosaixEditor.EditorSettings EditorSettings = new MosaixEditor.EditorSettings();
 
-    void Reset()
-    {
-        // When the script is added in the editor, set the default shaders and mosaic material.
-        ExpandEdgesShader = Shader.Find("Hidden/Mosaix/ExpandEdges");
-        BlitShader = Shader.Find("Hidden/Mosaix/Blit");
-        MosaicMaterial = (Material) AssetDatabase.LoadAssetAtPath("Assets/Mosaix/Shaders/Mosaic.mat", typeof(Material));
-    }
-
     public List<RenderTexture> GetTexturePasses()
     {
         List<RenderTexture> TexturePasses = new List<RenderTexture>();
