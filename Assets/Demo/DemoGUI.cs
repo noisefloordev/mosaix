@@ -7,10 +7,12 @@ public class DemoGUI: MonoBehaviour
     bool ShowSphere = true;
     bool ShowOutlines = false;
     float MosaicBlocks = 10;
+    float SpherePosition = 0;
 
     public Mosaix MosaixComponent;
     public GameObject SphereMask;
     public Material MosaicMaterial, MosaicWithOutlineMaterial;
+    public Transform SphereMaskStart, SphereMaskEnd;
 
     void OnGUI()
     {
@@ -86,6 +88,13 @@ public class DemoGUI: MonoBehaviour
             MosaixComponent.MaskFade = GUILayout.HorizontalSlider(MosaixComponent.MaskFade, 0, 1);
             GUILayout.EndHorizontal();
 
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Position");
+            SpherePosition = GUILayout.HorizontalSlider(SpherePosition, 0, 1);
+            GUILayout.EndHorizontal();
+
+            SphereMask.transform.position = Vector3.Lerp(SphereMaskStart.position, SphereMaskEnd.position, SpherePosition);
+
             Vector3 SphereScale = SphereMask.transform.localScale;
             GUILayout.BeginHorizontal();
             GUILayout.Label("Scale X");
@@ -130,8 +139,10 @@ public class DemoGUI: MonoBehaviour
         Renderer SphereMaskRenderer = SphereMask.GetComponent<Renderer>();
         SphereMaskRenderer.enabled = MosaixComponent.SphereMasking && ShowSphere;
         
+        // Anchor to the beginning sphere anchor instead of the sphere itself, so it doesn't
+        // move when moving the sphere.
         if(Anchoring)
-            MosaixComponent.AnchorTransform = SphereMask.gameObject;
+            MosaixComponent.AnchorTransform = SphereMaskStart.gameObject;
         else
             MosaixComponent.AnchorTransform = null;
 
