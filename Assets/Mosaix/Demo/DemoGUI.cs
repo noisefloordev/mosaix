@@ -6,7 +6,7 @@ public class DemoGUI: MonoBehaviour
     bool AnchorScaling = false;
     bool ShowSphere = true;
     bool ShowOutlines = false;
-    float MosaicBlocks = 10;
+    float MosaicBlocks = 20;
     float SpherePosition = 0;
 
     public Mosaix MosaixComponent;
