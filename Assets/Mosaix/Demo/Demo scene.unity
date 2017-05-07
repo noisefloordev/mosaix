@@ -207,7 +207,7 @@ MeshRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_Materials:
-  - {fileID: 2100000, guid: 911179796d5aa9242b92911bf570e3be, type: 2}
+  - {fileID: 2100000, guid: 70dcce8ae04c352448076bae4e3c8e51, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -304,7 +304,7 @@ MeshRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_Materials:
-  - {fileID: 2100000, guid: 911179796d5aa9242b92911bf570e3be, type: 2}
+  - {fileID: 2100000, guid: 70dcce8ae04c352448076bae4e3c8e51, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -467,7 +467,7 @@ MonoBehaviour:
   MosaixComponent: {fileID: 849186152}
   SphereMask: {fileID: 241845595}
   MosaicMaterial: {fileID: 2100000, guid: 0a8015bb40b2d2a429a5dabcce71e8e3, type: 2}
-  MosaicWithOutlineMaterial: {fileID: 2100000, guid: a90850e1afb4ca94084d52925ebc143c,
+  MosaicWithOutlineMaterial: {fileID: 2100000, guid: 9e8835c6e989e5d4eb087baed63811bc,
     type: 2}
   SphereMaskStart: {fileID: 552413412}
   SphereMaskEnd: {fileID: 1928638784}
