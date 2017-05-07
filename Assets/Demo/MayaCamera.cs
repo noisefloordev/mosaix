@@ -43,17 +43,14 @@ public class MayaCamera: MonoBehaviour
     {
         Camera camera = Camera.main;
 
-        if(mode == MouseMode.None && Input.GetKey(KeyCode.LeftAlt))
+        if(mode == MouseMode.None && (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)))
         {
-            if(Input.GetKey(KeyCode.LeftAlt))
-            {
-                if(Input.GetMouseButton(0))
-                    mode = MouseMode.Tumbling;
-                else if(Input.GetMouseButton(1))
-                    mode = MouseMode.Zooming;
-                else if(Input.GetMouseButton(2))
-                    mode = MouseMode.Panning;
-            }
+            if(Input.GetMouseButton(0))
+                mode = MouseMode.Tumbling;
+            else if(Input.GetMouseButton(1))
+                mode = MouseMode.Zooming;
+            else if(Input.GetMouseButton(2))
+                mode = MouseMode.Panning;
 
             if(mode != MouseMode.None)
             {
