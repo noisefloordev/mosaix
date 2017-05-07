@@ -670,7 +670,7 @@ public class Mosaix: MonoBehaviour
             // If the fade is zero, nudge it up slightly to avoid division by zero.
             float MaskSizeInner = 1;
             float MaskSizeOuter = MaskSizeInner + MaskFade;
-            if(MaskFade == 0)
+            if(MaskFade < 0.0001f)
                 MaskSizeOuter += 0.0001f;
 
             MosaicMaterial.SetFloat("MaskSizeOuter", MaskSizeOuter);
