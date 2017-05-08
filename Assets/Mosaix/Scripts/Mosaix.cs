@@ -351,11 +351,14 @@ public class Mosaix: MonoBehaviour
         NewSetup.HorizontalMosaicBlocks = HorizontalMosaicBlocks;
         NewSetup.VerticalMosaicBlocks = VerticalMosaicBlocks;
         NewSetup.ExpandPasses = ExpandPasses;
+
+        // Match the scene antialiasing level.
 #if UNITY_5_6_OR_NEVER
         bool allowMSAA = ThisCamera.allowMSAA;
 #else
         bool allowMSAA = false;
 #endif
+
         NewSetup.AntiAliasing = allowMSAA? QualitySettings.antiAliasing:0;
         if(NewSetup.AntiAliasing == 0)
             NewSetup.AntiAliasing = 1; // work around Unity inconsistency
@@ -388,11 +391,12 @@ public class Mosaix: MonoBehaviour
 
         // We'll render to the first texture, then blit each texture to the next to progressively
         // downscale it.
-        // The first texture is what we render into.  This is also the only texture that needs a depth buffer.
-        Passes.Add(new ImagePass(RenderTexture.GetTemporary(CurrentWidth, CurrentHeight, 24, format), PassType.Render));
-
-        // Match the scene antialiasing level.
-        Passes[Passes.Count-1].Texture.antiAliasing = NewSetup.AntiAliasing;
+        //
+        // The first texture is what we render into.  This is also the only texture that needs a depth buffer, and the
+        // only one that has antialiasing enabled.
+        Passes.Add(new ImagePass(RenderTexture.GetTemporary(CurrentWidth, CurrentHeight, 24, format,
+                        RenderTextureReadWrite.Default, NewSetup.AntiAliasing),
+                   PassType.Render));
 
         // Create a texture for each downscale step.
         int IntegerHorizontalMosaicBlocks = (int) Math.Ceiling(HorizontalMosaicBlocks);
