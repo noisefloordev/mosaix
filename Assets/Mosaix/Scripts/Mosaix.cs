@@ -554,7 +554,7 @@ public class Mosaix: MonoBehaviour
             RenderTexture dst = Passes[i].Texture;
 
             // This doesn't happen automatically.  We have to enable sRGBWrite manually.
-//            GL.sRGBWrite = dst.sRGB;
+            GL.sRGBWrite = dst.sRGB;
 
             switch(Passes[i].Type)
             {
