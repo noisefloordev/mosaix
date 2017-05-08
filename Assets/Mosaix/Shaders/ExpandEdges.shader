@@ -57,7 +57,7 @@ SubShader {
             return o;
         }
         
-#define SAMPLE(X,Y) tex2D(_MainTex, i.texcoord + float2(PixelUVStep.x * X, PixelUVStep.x * Y))
+#define SAMPLE(X,Y) tex2D(_MainTex, i.texcoord + float2(PixelUVStep.x * X, PixelUVStep.y * Y))
 
         half4 GetPixel(v2f i) : SV_Target
         {
