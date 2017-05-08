@@ -73,7 +73,7 @@ with external shaders like toon outlines requires shader editing.)
 Usage
 -----
 
-See "Test scene\Mosaix example.unity" for an example.
+See "Test scene\Demo scene.unity" for an example.
 
 - In the Inspector, Layer -> Add Layer, and create a layer to mosaic.  
 ![](Images/Setup_AddLayer.png)
