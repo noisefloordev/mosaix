@@ -349,7 +349,12 @@ public class Mosaix: MonoBehaviour
         NewSetup.HorizontalMosaicBlocks = HorizontalMosaicBlocks;
         NewSetup.VerticalMosaicBlocks = VerticalMosaicBlocks;
         NewSetup.ExpandPasses = ExpandPasses;
-        NewSetup.AntiAliasing = ThisCamera.allowMSAA? QualitySettings.antiAliasing:0;
+#if UNITY_5_6_OR_NEVER
+        bool allowMSAA = ThisCamera.allowMSAA;
+#else
+        bool allowMSAA = false;
+#endif
+        NewSetup.AntiAliasing = allowMSAA? QualitySettings.antiAliasing:0;
         if(NewSetup.AntiAliasing == 0)
             NewSetup.AntiAliasing = 1; // work around Unity inconsistency
 
@@ -370,7 +375,12 @@ public class Mosaix: MonoBehaviour
         // If there are no image effects enabled and Camera.forceIntoRenderTexture is false Unity will actually
         // just render sRGB and it'd be better for us to too, but there's no obvious way to ask Unity whether
         // it's rendering a camera into an HDR texture in OnPreRender.
-        RenderTextureFormat format = QualitySettings.activeColorSpace == ColorSpace.Linear && ThisCamera.allowHDR?
+#if UNITY_5_6_OR_NEWER
+        bool allowHDR = ThisCamera.allowHDR;
+#else
+        bool allowHDR = ThisCamera.hdr;
+#endif
+        RenderTextureFormat format = QualitySettings.activeColorSpace == ColorSpace.Linear && allowHDR?
             RenderTextureFormat.DefaultHDR:
             RenderTextureFormat.Default;
 
