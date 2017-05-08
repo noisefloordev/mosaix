@@ -95,8 +95,8 @@ public class Mosaix: MonoBehaviour
     public Shader BlitShader;
     private Material BlitMaterial;
 
-    // The number of pixels to offset the mosaic.  (5,0) will shift the center of the mosaic right by 5
-    // pixels in screen space.  (0,5) will shift the mosaic down by 5 pixels.
+    // The number of pixels to offset the mosaic, relative to the origin (bottom-left).  (5,0) will shift
+    // the center of the mosaic right by 5 pixels in screen space.  (0,5) will shift the mosaic up by 5 pixels.
     private Vector2 OffsetPixels;
 
     // The amount of extra screen space to render in the texture.  If this is 1, the texture is drawn at
@@ -538,7 +538,7 @@ public class Mosaix: MonoBehaviour
             float VerticalOffset = RoundToNearest(ScreenPos.y, VerticalMosaicSize) - ScreenPos.y;
 
             // Our offsets are relative to the bottom-left of the screen.
-            OffsetPixels = new Vector2(-HorizontalOffset, +VerticalOffset);
+            OffsetPixels = new Vector2(-HorizontalOffset, -VerticalOffset);
 //            Debug.Log(ScreenPos.x + ", " + HorizontalOffset + ", " + HorizontalMosaicSize + ", " + OffsetPixels.x);
 //            Debug.Log(ScreenPos.y + ", " + VerticalOffset + ", " + VerticalMosaicSize + ", " + OffsetPixels.y);
         }
@@ -589,7 +589,7 @@ public class Mosaix: MonoBehaviour
                     // buffer.  This will be reversed by TextureMatrix.  The render buffer always has pixels
                     // 1:1 to the screen (even if we're expanding it at the edges), so this is always in pixels.
                     float OffsetU = OffsetPixels.x / src.width;
-                    float OffsetV = -OffsetPixels.y / src.height;
+                    float OffsetV = OffsetPixels.y / src.height;
                     BottomLeftUV += new Vector2(OffsetU, OffsetV);
                     TopRightUV += new Vector2(OffsetU, OffsetV);
                 }
@@ -642,7 +642,7 @@ public class Mosaix: MonoBehaviour
             // OffsetPixels shifted the texture in order to move where the center of the mosaic blocks are.
             // Undo the shifting here, so it isn't actually shifted on screen.
             float OffsetPixelsU = OffsetPixels.x / Passes[0].Texture.width;
-            float OffsetPixelsV = -OffsetPixels.y / Passes[0].Texture.height;
+            float OffsetPixelsV = OffsetPixels.y / Passes[0].Texture.height;
             //Matrix4x4 MosaicTextureMatrix = TranslationMatrix(new Vector3(-OffsetPixelsU, -OffsetPixelsV, 0)) * FullTextureMatrix;
             Matrix4x4 MosaicTextureMatrix = Matrix4x4.identity;
             MosaicTextureMatrix *= ScaleMatrix(new Vector3(HorizontalMosaicRatio, VerticalMosaicRatio, 0));
