@@ -41,7 +41,7 @@ public class MayaCamera: MonoBehaviour
 
     void Update() 
     {
-        Camera camera = Camera.main;
+        Camera camera = gameObject.GetComponent<Camera>();
 
         if(mode == MouseMode.None && (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)))
         {
