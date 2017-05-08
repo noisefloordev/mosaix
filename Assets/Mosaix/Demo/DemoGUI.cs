@@ -66,7 +66,11 @@ public class DemoGUI: MonoBehaviour
         MosaixComponent.Alpha = GUILayout.HorizontalSlider(MosaixComponent.Alpha, 0, 1);
         GUILayout.EndHorizontal();
 
+#if UNITY_5_5_OR_NEWER
+        // This material only works in 5.5 and up.  This is just an example of how this shader can
+        // have other shaders layered on top of it.
         ShowOutlines = GUILayout.Toggle(ShowOutlines, "Outlines");
+#endif
 
         Anchoring = GUILayout.Toggle(Anchoring, "Anchoring");
         if(Anchoring)

@@ -1,3 +1,6 @@
+// Disable Unity's horrifying automatic upgrade thing that modifies your
+// source code without asking: UNITY_SHADER_NO_UPGRADE
+
 // This is used by MosaixEditor.cs to display textures.
 Shader "Hidden/Mosaix/EditorTextureDisplay" {
 Properties {
@@ -14,6 +17,8 @@ SubShader {
         #pragma target 2.0
         
         #include "UnityCG.cginc"
+        #include "UnityCompat.cginc"
+        
         #pragma multi_compile DISP_NORMAL DISP_UNPREMULTIPLY DISP_ALPHA_ONLY DISP_WITHOUT_ALPHA
 
         struct appdata_t {

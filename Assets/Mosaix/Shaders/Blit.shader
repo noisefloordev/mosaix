@@ -1,3 +1,6 @@
+// Disable Unity's horrifying automatic upgrade thing that modifies your
+// source code without asking: UNITY_SHADER_NO_UPGRADE
+
 // This is a simple blit texture, like Graphics.Blit.
 Shader "Hidden/Mosaix/Blit" {
 Properties {
@@ -16,6 +19,7 @@ SubShader {
         #pragma target 2.0
         
         #include "UnityCG.cginc"
+        #include "UnityCompat.cginc"
 
         struct appdata_t {
             float4 vertex : POSITION;

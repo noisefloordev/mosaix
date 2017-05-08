@@ -1,3 +1,5 @@
+// Disable Unity's horrifying automatic upgrade thing that modifies your
+// source code without asking: UNITY_SHADER_NO_UPGRADE
 Shader "Hidden/Mosaix/ExpandEdges" {
 Properties {
     _MainTex ("Base (RGB)", 2D) = "white" {}
@@ -34,6 +36,7 @@ SubShader {
         #pragma target 2.0
         
         #include "UnityCG.cginc"
+        #include "UnityCompat.cginc"
 
         struct appdata_t {
             float4 vertex : POSITION;

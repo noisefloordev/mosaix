@@ -1,3 +1,6 @@
+// Disable Unity's horrifying automatic upgrade thing that modifies your
+// source code without asking: UNITY_SHADER_NO_UPGRADE
+
 Shader "FX/Mosaix" {
 
 Properties {
@@ -21,6 +24,20 @@ SubShader {
         #pragma multi_compile __ SHOW_MASK
 
         #include "UnityCG.cginc"
+        #include "UnityCompat.cginc"
+
+        // This receives textures of the full resolution screen, and a downscaled version to sample
+        // the mosaic.
+        //
+        // There are two ways to get the screen coordinates of a fragment: VPOS in the fragment
+        // shader, and ComputeScreenPos from the vertex coordinates.  During earlier testing, ComputeScreenPos
+        // gave rounding artifacts that were worked around in VPOS, but this isn't happening now.  VPOS
+        // is broken in all versions of Unity between 5.0 and 5.5 (it doesn't take the viewport into account),
+        // so ComputeScreenPos is preferred.  If the rounding issues crop up again, USE_VPOS can be defined
+        // to turn it back on.
+// #if UNITY_VERSION >= 560
+// #define USE_VPOS
+// #endif
 
         struct appdata_t {
             float4 vertex : POSITION;
@@ -30,7 +47,9 @@ SubShader {
         struct v2f {
             float3 world : TEXCOORD;
             float2 uv : TEXCOORD1;
-            // float4 screenPos : SCREENPOS;
+#ifndef USE_VPOS
+            float4 screenPos : TEXCOORD2;
+#endif
         };
 
         sampler2D MosaicTex;
@@ -58,19 +77,28 @@ SubShader {
             o.world = mul(unity_ObjectToWorld, v.vertex);
             o.uv = v.uv;
 
+#ifndef USE_VPOS
             // We can calculate the screen position with ComputeScreenPos(vertex), but this causes odd
             // rounding error at the boundary between mosaic pixels.  Instead, use VPOS.
-            // o.screenPos = ComputeScreenPos(vertex);
+            o.screenPos = ComputeScreenPos(vertex);
+#endif
+
             return o;
         }
 
+#ifdef USE_VPOS
         half4 frag(v2f i, UNITY_VPOS_TYPE screenPos : VPOS) : SV_Target
         {
+            float2 ScreenSpaceUV = screenPos / _ScreenParams.xy;
+#else
+        half4 frag(v2f i) : SV_Target
+        {
+            float2 ScreenSpaceUV = i.screenPos / i.screenPos.w;
+#endif
             // Sample the mosaic texture in screen space.  FullUV is the texture coordinates in
             // the full resolution texture (not shifted by the offset), and MosaicUV is the texture
             // coordinates in the mosaic (shifted by the offset).  If OffsetX/OffsetY are 0,
             // these are the same.
-            float2 ScreenSpaceUV = screenPos.xy / _ScreenParams.xy;
             float2 FullUV = mul(FullTextureMatrix, float4(ScreenSpaceUV, 0, 1));
             float2 MosaicUV = mul(MosaicTextureMatrix, float4(ScreenSpaceUV, 0, 1));
 

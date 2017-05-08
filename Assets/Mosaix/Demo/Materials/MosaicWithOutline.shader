@@ -8,6 +8,9 @@
  * then call into MosaicShader to draw the mosaic separately.
  */
 
+// Disable Unity's horrifying automatic upgrade thing that modifies your
+// source code without asking: UNITY_SHADER_NO_UPGRADE
+
 Shader "TestScene/MosaicWithOutline" {
 	Properties {
 		_Color ("Main Color", Color) = (.5,.5,.5,1)
@@ -18,6 +21,7 @@ Shader "TestScene/MosaicWithOutline" {
 
         CGINCLUDE
 	#include "UnityCG.cginc"
+        #include "../../Shaders/UnityCompat.cginc"
 	
 	struct appdata {
 		float4 vertex : POSITION;
