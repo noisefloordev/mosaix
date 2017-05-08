@@ -41,9 +41,6 @@ public class MosaixEditor: Editor
         if(TextureDisplayMaterial == null)
             TextureDisplayMaterial = new Material(Shader.Find("Hidden/Mosaix/EditorTextureDisplay"));
 
-        GUIStyle boldFoldout = new GUIStyle(EditorStyles.foldout);
-        boldFoldout.fontStyle = FontStyle.Bold;
-
         Mosaix obj = (Mosaix) target;
         Undo.RecordObject(obj, "Mosaix change");
         
@@ -58,7 +55,7 @@ public class MosaixEditor: Editor
                     "If Anchor Scaling is enabled, this will be scaled by the distance from the " +
                     "camera to the anchor."), obj.MosaicBlocks, 2, 500);
         
-        obj.EditorSettings.ShowMasking = EditorGUILayout.Foldout(obj.EditorSettings.ShowMasking, "Masking", true, boldFoldout);
+        obj.EditorSettings.ShowMasking = Foldout(obj.EditorSettings.ShowMasking, "Masking");
         if(obj.EditorSettings.ShowMasking)
         {
             obj.TextureMasking = EditorGUILayout.ToggleLeft(new GUIContent("Texture masking",
@@ -91,7 +88,7 @@ public class MosaixEditor: Editor
             }
         }
 
-        obj.EditorSettings.ShowAnchoring = EditorGUILayout.Foldout(obj.EditorSettings.ShowAnchoring, "Anchoring", true, boldFoldout);
+        obj.EditorSettings.ShowAnchoring = Foldout(obj.EditorSettings.ShowAnchoring, "Anchoring");
         if(obj.EditorSettings.ShowAnchoring)
         {
             ++EditorGUI.indentLevel;
@@ -105,7 +102,7 @@ public class MosaixEditor: Editor
             --EditorGUI.indentLevel;
         }
 
-        obj.EditorSettings.ShowAdvanced = EditorGUILayout.Foldout(obj.EditorSettings.ShowAdvanced, "Advanced settings", true, boldFoldout);
+        obj.EditorSettings.ShowAdvanced = Foldout(obj.EditorSettings.ShowAdvanced, "Advanced settings");
         if(obj.EditorSettings.ShowAdvanced)
         {
             ++EditorGUI.indentLevel;
@@ -134,7 +131,7 @@ public class MosaixEditor: Editor
             --EditorGUI.indentLevel;
         }
 
-        obj.EditorSettings.ShowShaders = EditorGUILayout.Foldout(obj.EditorSettings.ShowShaders, "Shaders", true, boldFoldout);
+        obj.EditorSettings.ShowShaders = Foldout(obj.EditorSettings.ShowShaders, "Shaders");
 
         if(obj.EditorSettings.ShowShaders)
         {
@@ -148,7 +145,7 @@ public class MosaixEditor: Editor
         if(EditorApplication.isPlaying)
         {
             // For development, allow inspecting the various textures used by the shader.
-            obj.EditorSettings.ShowDebugging = EditorGUILayout.Foldout(obj.EditorSettings.ShowDebugging, "Debugging", true, boldFoldout);
+            obj.EditorSettings.ShowDebugging = Foldout(obj.EditorSettings.ShowDebugging, "Debugging");
 
             if(obj.EditorSettings.ShowDebugging)
             {
@@ -236,6 +233,26 @@ public class MosaixEditor: Editor
                 --EditorGUI.indentLevel;
             }
         }
+    }
+
+    static GUIStyle boldFoldout;
+
+    static bool Foldout(bool val, string name)
+    {
+        if(boldFoldout == null)
+        {
+            boldFoldout = new GUIStyle(EditorStyles.foldout);
+            boldFoldout.fontStyle = FontStyle.Bold;
+        }
+
+#if UNITY_5_5_OR_NEWER
+        // This version adds the "toggleOnLabelClick", to make foldouts behave the way they always
+        // should have.  I don't know why they make people jump hoops like this instead of just making
+        // them always behave correctly.
+        return EditorGUILayout.Foldout(val, name, true, boldFoldout);
+#else
+        return EditorGUILayout.Foldout(val, name, boldFoldout);
+#endif
     }
 }
 #endif
