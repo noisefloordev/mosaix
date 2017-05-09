@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class DemoGUI: MonoBehaviour 
 {
-    bool ShowSphere = true;
+    public bool ShowSphere = true;
     public float MosaicBlocks = 20;
     float SpherePosition = 0;
 

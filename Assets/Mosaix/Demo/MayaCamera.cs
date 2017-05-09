@@ -61,6 +61,10 @@ public class MayaCamera: MonoBehaviour
             {
                 MousePosition = Input.mousePosition;
 
+                // If we have any SkinnedMeshColliders, update them so we can test if the user
+                // clicked on a skinned mesh.
+                SkinnedMeshCollider.UpdateAllColliders();
+
                 // Find the object the mouse is over.  If there isn't one, keep the old origin.
                 // Maya actually remembers the distance to the most recent click (centerOfInterest)
                 // and uses that as the distance to the origin if you click on a point that doesn't
