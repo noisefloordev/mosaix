@@ -438,11 +438,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a3bcee3617155c4caa26b11ba078d38, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  MosaicBlocks: 20
+  ScaleControl: 1
   MosaixComponent: {fileID: 849186152}
   SphereMask: {fileID: 241845595}
-  MosaicMaterial: {fileID: 2100000, guid: 0a8015bb40b2d2a429a5dabcce71e8e3, type: 2}
-  MosaicWithOutlineMaterial: {fileID: 2100000, guid: 9e8835c6e989e5d4eb087baed63811bc,
-    type: 2}
   SphereMaskStart: {fileID: 552413412}
   SphereMaskEnd: {fileID: 1928638784}
 --- !u!114 &849186152

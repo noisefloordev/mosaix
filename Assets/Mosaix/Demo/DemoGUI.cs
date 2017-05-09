@@ -3,13 +3,15 @@ using UnityEngine;
 public class DemoGUI: MonoBehaviour 
 {
     bool ShowSphere = true;
-    bool ShowOutlines = false;
-    float MosaicBlocks = 20;
+    public float MosaicBlocks = 20;
     float SpherePosition = 0;
+
+    // This is true in the simple demo where we show a scale control, and false in the character
+    // demo where scaling interpolates between the two control endpoints.
+    public bool ScaleControl;
 
     public Mosaix MosaixComponent;
     public GameObject SphereMask;
-    public Material MosaicMaterial, MosaicWithOutlineMaterial;
     public Transform SphereMaskStart, SphereMaskEnd;
 
     void OnGUI()
@@ -64,13 +66,7 @@ public class DemoGUI: MonoBehaviour
         MosaixComponent.Alpha = GUILayout.HorizontalSlider(MosaixComponent.Alpha, 0, 1);
         GUILayout.EndHorizontal();
 
-#if UNITY_5_5_OR_NEWER
-        // This material only works in 5.5 and up.  This is just an example of how this shader can
-        // have other shaders layered on top of it.
-        ShowOutlines = GUILayout.Toggle(ShowOutlines, "Outlines");
-#endif
-
-        MosaixComponent.FollowAnchor = GUILayout.Toggle(MosaixComponent.FollowAnchor, "Follow anchor");
+        MosaixComponent.FollowAnchor = GUILayout.Toggle(MosaixComponent.FollowAnchor, "Anchor transform");
         MosaixComponent.ScaleMosaicToAnchorDistance = GUILayout.Toggle(MosaixComponent.ScaleMosaicToAnchorDistance, "Scale mosaic");
 
         MosaixComponent.SphereMasking = GUILayout.Toggle(MosaixComponent.SphereMasking, "Sphere masking");
@@ -91,26 +87,33 @@ public class DemoGUI: MonoBehaviour
             GUILayout.EndHorizontal();
 
             SphereMask.transform.position = Vector3.Lerp(SphereMaskStart.position, SphereMaskEnd.position, SpherePosition);
+            SphereMask.transform.rotation = Quaternion.Lerp(SphereMaskStart.rotation, SphereMaskEnd.rotation, SpherePosition);
 
-            Vector3 SphereScale = SphereMask.transform.localScale;
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Scale X");
-            SphereScale.x = GUILayout.HorizontalSlider(SphereScale.x, 0.25f, 2);
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Scale Y");
-            SphereScale.y = GUILayout.HorizontalSlider(SphereScale.y, 0.25f, 2);
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Scale Z");
-            SphereScale.z = GUILayout.HorizontalSlider(SphereScale.z, 0.25f, 2);
-            GUILayout.EndHorizontal();
-            SphereMask.transform.localScale = SphereScale;
+            if(ScaleControl)
+            {
+                Vector3 SphereScale = SphereMask.transform.localScale;
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Scale X");
+                SphereScale.x = GUILayout.HorizontalSlider(SphereScale.x, 0.25f, 2);
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Scale Y");
+                SphereScale.y = GUILayout.HorizontalSlider(SphereScale.y, 0.25f, 2);
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Scale Z");
+                SphereScale.z = GUILayout.HorizontalSlider(SphereScale.z, 0.25f, 2);
+                GUILayout.EndHorizontal();
+                SphereMask.transform.localScale = SphereScale;
+            } else {
+                SphereMask.transform.localScale = Vector3.Lerp(SphereMaskStart.localScale, SphereMaskEnd.localScale, SpherePosition);
+            }
 
             EndGroup();
         }
 
-        MosaixComponent.TextureMasking = GUILayout.Toggle(MosaixComponent.TextureMasking, "Texture masking");
+        if(MosaixComponent.MaskingTexture != null)
+            MosaixComponent.TextureMasking = GUILayout.Toggle(MosaixComponent.TextureMasking, "Texture masking");
         MosaixComponent.ShowMask = GUILayout.Toggle(MosaixComponent.ShowMask, "Show mask");
     }
 
@@ -138,9 +141,5 @@ public class DemoGUI: MonoBehaviour
         
         if(MosaixComponent.ScaleMosaicToAnchorDistance)
             MosaixComponent.MosaicBlocks *= 5;
-
-        // This shows how you can apply your own effects on top of the mosaic, such as having toon
-        // outlines that aren't mosaiced.
-        MosaixComponent.MosaicMaterial = ShowOutlines? MosaicWithOutlineMaterial:MosaicMaterial;
     }
 }
