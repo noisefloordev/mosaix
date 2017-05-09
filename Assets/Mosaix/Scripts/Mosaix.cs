@@ -200,6 +200,13 @@ public class Mosaix: MonoBehaviour
     };
     Setup CurrentSetup;
 
+    // Throw a fatal error, and disable the script so we don't spam errors if something isn't set up right.
+    void FatalError(string s)
+    {
+        enabled = false;
+        throw new Exception(this + ": " + s);
+    }
+
     void OnEnable()
     {
         EnabledMosaixScripts.Add(this);
@@ -237,11 +244,10 @@ public class Mosaix: MonoBehaviour
     void Start()
     {
         ThisCamera = gameObject.GetComponent<Camera>();
-        if(ThisCamera == null)
-        {
-            Debug.LogError("This script must be attached to a camera.");
-            return;
-        }
+        if(ThisCamera == null) FatalError("This script must be attached to a camera.");
+        if(ExpandEdgesShader == null) FatalError("No ExpandEdgesShader is assigned.");
+        if(BlitShader == null) FatalError("No BlitShader is assigned.");
+        if(MosaicMaterial == null) FatalError("No MosaicMaterial is assigned.");
 
         // Create materials for our shaders.
         ExpandEdgesMaterial = new Material(ExpandEdgesShader);
