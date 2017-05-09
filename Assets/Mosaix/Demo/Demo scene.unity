@@ -98,7 +98,7 @@ GameObject:
   - 33: {fileID: 241845598}
   - 23: {fileID: 241845596}
   m_Layer: 0
-  m_Name: Sphere
+  m_Name: Masking sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -229,7 +229,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 552413412}
   m_Layer: 0
-  m_Name: Anchor1
+  m_Name: Sphere position 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -457,7 +457,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MosaicLayer: 8
-  MosaicBlocks: 10
+  MosaicBlocks: 20
   ShadowsCastOnMosaic: 1
   HighResolutionRender: 1
   Alpha: 1
@@ -466,8 +466,9 @@ MonoBehaviour:
   MaskFade: .100000001
   TextureMasking: 0
   MaskingTexture: {fileID: 2800000, guid: 42d16a9d3f4ec0e41b2df50d9d79c2c9, type: 3}
-  AnchorTransform: {fileID: 0}
+  AnchorTransform: {fileID: 552413411}
   ScaleMosaicToAnchorDistance: 0
+  FollowAnchor: 0
   ExpandEdgesShader: {fileID: 4800000, guid: 9666abf06efb7ae4981250b02600200c, type: 3}
   MosaicMaterial: {fileID: 2100000, guid: 0a8015bb40b2d2a429a5dabcce71e8e3, type: 2}
   BlitShader: {fileID: 4800000, guid: d7f50eff2b8e934428a6c4e7a1db26df, type: 3}
@@ -495,6 +496,7 @@ MonoBehaviour:
   MaskingTexture: {fileID: 0}
   AnchorTransform: {fileID: 0}
   ScaleMosaicToAnchorDistance: 0
+  FollowAnchor: 0
   ExpandEdgesShader: {fileID: 4800000, guid: 9666abf06efb7ae4981250b02600200c, type: 3}
   MosaicMaterial: {fileID: 2100000, guid: 0a8015bb40b2d2a429a5dabcce71e8e3, type: 2}
   BlitShader: {fileID: 4800000, guid: d7f50eff2b8e934428a6c4e7a1db26df, type: 3}
@@ -598,7 +600,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 1928638784}
   m_Layer: 0
-  m_Name: Anchor2
+  m_Name: Sphere position 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

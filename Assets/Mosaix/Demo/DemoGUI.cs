@@ -2,8 +2,6 @@ using UnityEngine;
 
 public class DemoGUI: MonoBehaviour 
 {
-    bool Anchoring = false;
-    bool AnchorScaling = false;
     bool ShowSphere = true;
     bool ShowOutlines = false;
     float MosaicBlocks = 20;
@@ -72,13 +70,8 @@ public class DemoGUI: MonoBehaviour
         ShowOutlines = GUILayout.Toggle(ShowOutlines, "Outlines");
 #endif
 
-        Anchoring = GUILayout.Toggle(Anchoring, "Anchoring");
-        if(Anchoring)
-        {
-            BeginGroup();
-            AnchorScaling = GUILayout.Toggle(AnchorScaling, "Anchor scaling");
-            EndGroup();
-        }
+        MosaixComponent.FollowAnchor = GUILayout.Toggle(MosaixComponent.FollowAnchor, "Follow anchor");
+        MosaixComponent.ScaleMosaicToAnchorDistance = GUILayout.Toggle(MosaixComponent.ScaleMosaicToAnchorDistance, "Scale mosaic");
 
         MosaixComponent.SphereMasking = GUILayout.Toggle(MosaixComponent.SphereMasking, "Sphere masking");
         if(MosaixComponent.SphereMasking)
@@ -143,15 +136,7 @@ public class DemoGUI: MonoBehaviour
         Renderer SphereMaskRenderer = SphereMask.GetComponent<Renderer>();
         SphereMaskRenderer.enabled = MosaixComponent.SphereMasking && ShowSphere;
         
-        // Anchor to the beginning sphere anchor instead of the sphere itself, so it doesn't
-        // move when moving the sphere.
-        if(Anchoring)
-            MosaixComponent.AnchorTransform = SphereMaskStart.gameObject;
-        else
-            MosaixComponent.AnchorTransform = null;
-
-        MosaixComponent.ScaleMosaicToAnchorDistance = AnchorScaling;
-        if(Anchoring && AnchorScaling)
+        if(MosaixComponent.ScaleMosaicToAnchorDistance)
             MosaixComponent.MosaicBlocks *= 5;
 
         // This shows how you can apply your own effects on top of the mosaic, such as having toon

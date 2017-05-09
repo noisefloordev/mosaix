@@ -75,13 +75,33 @@ public class Mosaix: MonoBehaviour
 
     // Anchoring
     //
-    // If this is set, we'll shift the mosaic so this transform always lies on the intersection of two
-    // mosaic blocks.  This allows the mosaic to appear to follow an object as it moves and turns.
+    // The anchor used by FollowAnchor and ScaleMosaicToAnchorDistance.  If both of those are
+    // disabled, this will have no effect.
     public GameObject AnchorTransform;
 
     // If true, we'll scale the mosaic so it gets bigger when the anchor is closer to the camera
     // and smaller as it gets further away.
     public bool ScaleMosaicToAnchorDistance;
+
+    // If true, the mosaic alignment will follow the anchor around on screen.  This gives a "solid"
+    // looking mosaic.
+    public bool FollowAnchor;
+
+    // The most recent offset of AnchorTransform on screen relative to the mosaic.
+    private Vector2 PreviousAnchorOffset = new Vector2(0,0);
+
+    // The offset of the mosaic.  At 0x0, the mosaic is aligned to the bottom-left of the texture.  At 0.5x0.5,
+    // the mosaic grid is shifted right and up by one half of a mosaic block.  This is tracked as a fraction of
+    // a block instead of pixels, so the offset remains constant if the block size is changed.
+    private Vector2 MosaicOffset = new Vector2(0,0);
+
+    // Convert MosaicOffset to screen pixels.
+    private Vector2 MosaicOffsetPixels {
+        get {
+            Vector2 MosaicSize = GetMosaicSizeInPixels();
+            return new Vector2(MosaicOffset.x * MosaicSize.x, MosaicOffset.y * MosaicSize.y);
+        }
+    }
 
     // This shader copies the outermost edge of opaque pixels outwards.
     public Shader ExpandEdgesShader;
@@ -94,10 +114,6 @@ public class Mosaix: MonoBehaviour
     // A simple shader just used to copy from one texture to another:
     public Shader BlitShader;
     private Material BlitMaterial;
-
-    // The number of pixels to offset the mosaic, relative to the origin (bottom-left).  (5,0) will shift
-    // the center of the mosaic right by 5 pixels in screen space.  (0,5) will shift the mosaic up by 5 pixels.
-    private Vector2 OffsetPixels;
 
     // The amount of extra screen space to render in the texture.  If this is 1, the texture is drawn at
     // exactly the size of the screen.  If 2, the texture is expanded by 2x.  The screen will still be
@@ -463,8 +479,80 @@ public class Mosaix: MonoBehaviour
         return (x - l1) * (h2 - l2) / (h1 - l1) + l2;
     }
 
+    // Return the size of the mosaic, in screen pixels.
+    Vector2 GetMosaicSizeInPixels()
+    {
+        // Return 1x1 if we're not initialized yet, which happens in SetupTextures().
+        if(MosaicCamera.targetTexture == null || CurrentSetup.HorizontalMosaicBlocks == 0)
+            return new Vector2(1,1);
+
+        return new Vector2(
+                MosaicCamera.targetTexture.width / CurrentSetup.HorizontalMosaicBlocks,
+                MosaicCamera.targetTexture.height / CurrentSetup.VerticalMosaicBlocks);
+    }
+
+    // Return the offset from the mosaic grid at the given screen coordinates.  If ScreenPos lies exactly
+    // on a mosaic grid intersection, return 0x0.  If ScreenPos is two pixels to the right and three
+    // pixels above a grid intersection, return (2x3).
+    Vector2 GetOffsetAtScreenPos(Vector3 ScreenPos)
+    {
+        // The size of the mosaic, in screen pixels:
+        Vector2 MosaicSize = GetMosaicSizeInPixels();
+
+        // If MosaicOffsetPixels is (1,0), the mosaic is shifted right by one pixel.  Offset ScreenPos too so we
+        // return the offset relative to the current mosaic.
+        Vector3 AdjustedScreenPos = ScreenPos - new Vector3(MosaicOffsetPixels.x, MosaicOffsetPixels.y, 0);
+
+        // Figure out the offset needed to align the mosaic to the anchor.
+        Vector2 OffsetFromOrigin = new Vector2(
+                RoundToNearest(ScreenPos.x, MosaicSize.x) - AdjustedScreenPos.x,
+                RoundToNearest(ScreenPos.y, MosaicSize.y) - AdjustedScreenPos.y);
+
+        OffsetFromOrigin *= -1;
+
+        // Scale the offset from pixels to fraction of a block.
+        OffsetFromOrigin.x /= MosaicSize.x;
+        OffsetFromOrigin.y /= MosaicSize.y;
+
+        // Debug.Log(MosaicSize.x.ToString("N2") + "x" + MosaicSize.y.ToString("N2") + ", " + ScreenPos.x.ToString("N2") + "x" + ScreenPos.y.ToString("N2") + ", " + OffsetFromOrigin.x.ToString("N2") + "x" + OffsetFromOrigin.y.ToString("N2"));
+        return OffsetFromOrigin;
+    }
+
+    void SetMosaicOffset(Vector2 Offset)
+    {
+        MosaicOffset = Offset;
+
+        // Wrap MosaicOffset to [-0.5,0.5].
+        MosaicOffset += new Vector2(0.5f, 0.5f);
+        MosaicOffset.x %= 1.0f;
+        MosaicOffset.y %= 1.0f;
+        if(MosaicOffset.x < 0) MosaicOffset.x += 1;
+        if(MosaicOffset.y < 0) MosaicOffset.y += 1;
+        MosaicOffset -= new Vector2(0.5f, 0.5f);
+    }
+
+    // Store the current anchor alignment.
+    //
+    // Call this after moving the anchor if you don't want the mosaic to shift as a side-effect.  This won't
+    // prevent distance scaling from changing.
+    public void ResetAnchorAlignment()
+    {
+        if(AnchorTransform != null && MosaicCamera != null)
+        {
+            Vector3 OldAnchorScreenPos = MosaicCamera.WorldToScreenPoint(AnchorTransform.transform.position);
+            PreviousAnchorOffset = GetOffsetAtScreenPos(OldAnchorScreenPos);
+        }
+    }
+
     void OnPreRender()
     {
+        // If we're not aligning the mosaic to the transform (but we may be aligning it for scale), save
+        // the mosaic alignment now.  This way, when we update the alignment later, we do it relative to now
+        // rather than to the last frame.  That makes it so we only adjust for changes that we make to the
+        // mosaic below (scaling) and not for other changes to the scene, like the anchor or camera moving.
+        if(!FollowAnchor)
+            ResetAnchorAlignment();
+
         // Update the render targets if the window has been resized.
         SetupTextures();
 
@@ -520,32 +608,27 @@ public class Mosaix: MonoBehaviour
         foreach(KeyValuePair<Renderer,ShadowCastingMode> SavedShadowMode in DisabledRenderers)
             SavedShadowMode.Key.shadowCastingMode = SavedShadowMode.Value;
 
-        // If we have an AnchorTransform, see how many screen space pixels we should shift the resized texture
-        // to keep the mosaic aligned with it.  We do this now so we can use MosaicCamera.projectionMatrix.
-        // We use that instead of ThisCamera.projectionMatrix so it takes the render scale into account.
+        // If either transform or scale anchoring are enabled, update the offset.
+        //
+        // This is done for scaling and not just alignment.  If we scale the mosaic without also aligning
+        // it, the mosaic changing scale is ugly since the mosaic is effectively anchored to the bottom-left.
+        if((FollowAnchor || ScaleMosaicToAnchorDistance) && AnchorTransform != null)
+        {
+            // See how far the anchor has moved in screen space since the last time ResetAnchorAlignment was
+            // called, and shift the mosaic to compensate.
+            Vector3 NewScreenPos = MosaicCamera.WorldToScreenPoint(AnchorTransform.transform.position);
+            Vector2 NewOffset = GetOffsetAtScreenPos(NewScreenPos);
+            Vector2 OffsetDelta = NewOffset - PreviousAnchorOffset;
+            SetMosaicOffset(MosaicOffset + OffsetDelta);
+        }
+
+        // Remember where the anchor is on screen now that we've adjusted it, so we update relative to this
+        // next frame.
         if(AnchorTransform != null)
-        {
-            // Get the screen coordinates of the anchor.
-            // see where the transform is in screen space, and set the offset so that lies on a mosaic intersection
-            Vector3 ScreenPos = MosaicCamera.WorldToScreenPoint(AnchorTransform.transform.position);
+            ResetAnchorAlignment();
 
-            // The size of the mosaic, in screen pixels:
-            float HorizontalMosaicSize = MosaicCamera.targetTexture.width / CurrentSetup.HorizontalMosaicBlocks;
-            float VerticalMosaicSize = MosaicCamera.targetTexture.height / CurrentSetup.VerticalMosaicBlocks;
-
-            // Figure out the offset needed to align the mosaic to the anchor.
-            float HorizontalOffset = RoundToNearest(ScreenPos.x, HorizontalMosaicSize) - ScreenPos.x;
-            float VerticalOffset = RoundToNearest(ScreenPos.y, VerticalMosaicSize) - ScreenPos.y;
-
-            // Our offsets are relative to the bottom-left of the screen.
-            OffsetPixels = new Vector2(-HorizontalOffset, -VerticalOffset);
-//            Debug.Log(ScreenPos.x + ", " + HorizontalOffset + ", " + HorizontalMosaicSize + ", " + OffsetPixels.x);
-//            Debug.Log(ScreenPos.y + ", " + VerticalOffset + ", " + VerticalMosaicSize + ", " + OffsetPixels.y);
-        }
-        else
-        {
-            OffsetPixels = new Vector2(0, 0);
-        }
+        Vector2 OffsetPixels = MosaicOffsetPixels;
+        Vector2 OffsetUV = new Vector2(OffsetPixels.x / Passes[0].Texture.width, OffsetPixels.y / Passes[0].Texture.height);
 
         // Run each postprocessing pass.
         for(int i = 1; i < Passes.Count; ++i)
@@ -588,10 +671,8 @@ public class Mosaix: MonoBehaviour
                     // Apply the mosaic offset in the first downscale by shifting UVs when sampling the render
                     // buffer.  This will be reversed by TextureMatrix.  The render buffer always has pixels
                     // 1:1 to the screen (even if we're expanding it at the edges), so this is always in pixels.
-                    float OffsetU = OffsetPixels.x / src.width;
-                    float OffsetV = OffsetPixels.y / src.height;
-                    BottomLeftUV += new Vector2(OffsetU, OffsetV);
-                    TopRightUV += new Vector2(OffsetU, OffsetV);
+                    BottomLeftUV += new Vector2(OffsetUV.x, OffsetUV.y);
+                    TopRightUV += new Vector2(OffsetUV.x, OffsetUV.y);
                 }
 
                 GL.Begin(GL.QUADS);
@@ -641,12 +722,9 @@ public class Mosaix: MonoBehaviour
 
             // OffsetPixels shifted the texture in order to move where the center of the mosaic blocks are.
             // Undo the shifting here, so it isn't actually shifted on screen.
-            float OffsetPixelsU = OffsetPixels.x / Passes[0].Texture.width;
-            float OffsetPixelsV = OffsetPixels.y / Passes[0].Texture.height;
-            //Matrix4x4 MosaicTextureMatrix = TranslationMatrix(new Vector3(-OffsetPixelsU, -OffsetPixelsV, 0)) * FullTextureMatrix;
             Matrix4x4 MosaicTextureMatrix = Matrix4x4.identity;
             MosaicTextureMatrix *= ScaleMatrix(new Vector3(HorizontalMosaicRatio, VerticalMosaicRatio, 0));
-            MosaicTextureMatrix *= TranslationMatrix(new Vector3(-OffsetPixelsU, -OffsetPixelsV, 0));
+            MosaicTextureMatrix *= TranslationMatrix(new Vector3(-OffsetUV.x, -OffsetUV.y, 0));
 
             // If we scaled the full resolution image, the mosaic is affected as well.
             MosaicTextureMatrix *= FullTextureMatrix;

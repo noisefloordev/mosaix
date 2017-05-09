@@ -93,12 +93,17 @@ public class MosaixEditor: Editor
         {
             ++EditorGUI.indentLevel;
             obj.AnchorTransform = (GameObject) EditorGUILayout.ObjectField("Anchor", obj.AnchorTransform, typeof(GameObject), true);
+            obj.FollowAnchor = EditorGUILayout.Toggle(new GUIContent("Follow Anchor",
+                        "If enabled, the mosaic blocks will align themselves to the anchor as it moves."),
+                        obj.FollowAnchor);
+
             obj.ScaleMosaicToAnchorDistance = EditorGUILayout.Toggle(new GUIContent("Scale mosaic size",
                     "If enabled, the mosaic will get bigger as the anchor gets closer to the camera.\n" +
                     "\n" +
                     "If the anchor is further than 1 unit from the camera, the mosaic will use smaller " +
                     "blocks, and if it's closer than 1 unit it'll use bigger blocks."),
                     obj.ScaleMosaicToAnchorDistance);
+
             --EditorGUI.indentLevel;
         }
 
