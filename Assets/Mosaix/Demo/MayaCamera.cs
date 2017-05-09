@@ -39,6 +39,11 @@ public class MayaCamera: MonoBehaviour
         return found;
     }
 
+    // Keep track of whether we have focus.  There should be a way to just query this and not have
+    // to track it manually.
+    bool HasFocus = true;
+    void OnApplicationFocus(bool b) { HasFocus = b; }
+
     void Update() 
     {
         Camera camera = gameObject.GetComponent<Camera>();
@@ -66,9 +71,12 @@ public class MayaCamera: MonoBehaviour
             }
         }
 
-        if(mode == MouseMode.None)
+        if(mode == MouseMode.None && HasFocus)
         {
-            // Handle mouse wheel zooming.
+            // Handle mouse wheel zooming.  Don't do this when we don't have focus, to reduce this
+            // triggering unintentionally while scrolling other editor windows.  We should really
+            // check whether the mouse is over the window, but Unity doesn't know how to let us do
+            // this.
             float MouseWheelDelta = Input.GetAxis("Mouse ScrollWheel");
             if(MouseWheelDelta != 0)
             {
