@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class MayaCamera: MonoBehaviour 
 {
-    private float TumblingSpeed = 200.0f;
+    private float TumblingSpeed = 300.0f;
     private float PanningSpeed = 1.5f;
     private Vector3 MousePosition;
     private Vector3 Origin;
