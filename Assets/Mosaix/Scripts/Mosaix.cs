@@ -328,10 +328,9 @@ public class Mosaix: MonoBehaviour
 
         float VerticalMosaicBlocks = HorizontalMosaicBlocks * ActualRenderScaleY;
 
-        // Make sure neither dimension is zero, and avoid 1 since it avoids some visual issues that
-        // I haven't tracked down.
-        HorizontalMosaicBlocks = Math.Max(2, HorizontalMosaicBlocks);
-        VerticalMosaicBlocks = Math.Max(2, VerticalMosaicBlocks);
+        // Make sure neither dimension is zero.
+        HorizontalMosaicBlocks = Math.Max(1, HorizontalMosaicBlocks);
+        VerticalMosaicBlocks = Math.Max(1, VerticalMosaicBlocks);
 
         // MosaicBlocks is the number of mosaic blocks we want to display.  However, the screen is probably not
         // square and we want the mosaic blocks to be square.  Adjust the number of blocks to fix this.
@@ -352,8 +351,11 @@ public class Mosaix: MonoBehaviour
         HorizontalMosaicBlocks = Math.Min(HorizontalMosaicBlocks, Width);
         VerticalMosaicBlocks = Math.Min(VerticalMosaicBlocks, Height);
 
-        HorizontalMosaicBlocks = Math.Max(HorizontalMosaicBlocks, 1);
-        VerticalMosaicBlocks = Math.Max(VerticalMosaicBlocks, 1);
+        // Don't allow these to go too low.  If we're only drawing one block, it's easy for MosaicOffset
+        // to put too much offscreen, so we'd need a very high RenderScale to compensate.  This probably
+        // would only happen from unexpected anchor scaling, so put a sanity limit here.
+        HorizontalMosaicBlocks = Math.Max(HorizontalMosaicBlocks, 4);
+        VerticalMosaicBlocks = Math.Max(VerticalMosaicBlocks, 4);
 
         int CurrentWidth = Width, CurrentHeight = Height;
 
