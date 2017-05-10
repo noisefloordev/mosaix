@@ -14,17 +14,24 @@ public class DemoGUI: MonoBehaviour
     public GameObject SphereMask;
     public Transform SphereMaskStart, SphereMaskEnd;
 
+    GUIStyle MakePaddedBoxStyle(int Horiz, int Vert)
+    {
+        GUIStyle PaddedBox = new GUIStyle(GUI.skin.box); 
+        PaddedBox.padding = new RectOffset(Horiz,Horiz,Vert,Vert);
+        return PaddedBox;
+    }
+    
     void OnGUI()
     {
         GUILayout.BeginArea(new Rect(0, 0, Screen.width, Screen.height));
             GUILayout.BeginHorizontal();
-            GUILayout.Space(50); // left padding
+            GUILayout.Space(20); // left padding
                 GUILayout.BeginVertical();
                     GUILayout.FlexibleSpace(); // bottom align
-                    GUILayout.Label("Hold ALT to navigate with the mouse", GUI.skin.box);
-                    GUILayout.Space(50); // bottom padding
+                    GUILayout.Label("Hold ALT to navigate with the mouse", MakePaddedBoxStyle(15,5));
+                    GUILayout.Space(20); // bottom padding
                 GUILayout.EndVertical();
-            GUILayout.Space(50); // right padding
+            GUILayout.FlexibleSpace(); // right padding
             GUILayout.EndHorizontal();
         GUILayout.EndArea();
 
@@ -38,11 +45,8 @@ public class DemoGUI: MonoBehaviour
             GUILayout.EndHorizontal();
         GUILayout.EndArea();
 
-        GUIStyle PaddedBox = new GUIStyle(GUI.skin.box); 
-        PaddedBox.padding = new RectOffset(10,10,10,10);
-
         GUILayout.BeginArea(new Rect(10, 10, Screen.width-20, Screen.height-20));
-            GUILayout.BeginVertical(PaddedBox, GUILayout.MinWidth(250));
+            GUILayout.BeginVertical(MakePaddedBoxStyle(10,10), GUILayout.MinWidth(250));
             ControlWindow();
             GUILayout.EndVertical();
         GUILayout.EndArea();
