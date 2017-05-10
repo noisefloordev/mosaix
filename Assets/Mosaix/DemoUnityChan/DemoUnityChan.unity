@@ -517,10 +517,9 @@ MonoBehaviour:
   AnchorTransform: {fileID: 241845595}
   ScaleMosaicToAnchorDistance: 0
   FollowAnchor: 1
-  ResizeShader: {fileID: 4800000, guid: ebb5912b475ed7144925b8067797b751, type: 3}
+  ResizeShader: {fileID: 4800000, guid: f0d2f67d64bcd7c41ab9a1750b0d16dc, type: 3}
   ExpandEdgesShader: {fileID: 4800000, guid: 9666abf06efb7ae4981250b02600200c, type: 3}
   MosaicMaterial: {fileID: 2100000, guid: fd9f68aefa4f7ff469af8243e4241fea, type: 2}
-  BlitShader: {fileID: 4800000, guid: d7f50eff2b8e934428a6c4e7a1db26df, type: 3}
   RenderScale: 1.10000002
 --- !u!114 &849186153
 MonoBehaviour:

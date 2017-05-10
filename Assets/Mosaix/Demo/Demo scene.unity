@@ -438,6 +438,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a3bcee3617155c4caa26b11ba078d38, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowSphere: 1
   MosaicBlocks: 20
   ScaleControl: 1
   MosaixComponent: {fileID: 849186152}
@@ -468,9 +469,9 @@ MonoBehaviour:
   AnchorTransform: {fileID: 552413411}
   ScaleMosaicToAnchorDistance: 0
   FollowAnchor: 0
+  ResizeShader: {fileID: 4800000, guid: f0d2f67d64bcd7c41ab9a1750b0d16dc, type: 3}
   ExpandEdgesShader: {fileID: 4800000, guid: 9666abf06efb7ae4981250b02600200c, type: 3}
   MosaicMaterial: {fileID: 2100000, guid: 0a8015bb40b2d2a429a5dabcce71e8e3, type: 2}
-  BlitShader: {fileID: 4800000, guid: d7f50eff2b8e934428a6c4e7a1db26df, type: 3}
   RenderScale: 1.10000002
 --- !u!114 &849186153
 MonoBehaviour:
@@ -496,9 +497,9 @@ MonoBehaviour:
   AnchorTransform: {fileID: 0}
   ScaleMosaicToAnchorDistance: 0
   FollowAnchor: 0
+  ResizeShader: {fileID: 4800000, guid: f0d2f67d64bcd7c41ab9a1750b0d16dc, type: 3}
   ExpandEdgesShader: {fileID: 4800000, guid: 9666abf06efb7ae4981250b02600200c, type: 3}
   MosaicMaterial: {fileID: 2100000, guid: 0a8015bb40b2d2a429a5dabcce71e8e3, type: 2}
-  BlitShader: {fileID: 4800000, guid: d7f50eff2b8e934428a6c4e7a1db26df, type: 3}
   RenderScale: 1.10000002
 --- !u!1 &871387750
 GameObject:
