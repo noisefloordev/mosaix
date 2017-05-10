@@ -1,6 +1,6 @@
 This is a Unity script to give clean mosaics.
 
-**[Live WebGL demo](https://s3.amazonaws.com/unity-mosaix/demo/index.html)**
+**[Live WebGL demo](https://s3.amazonaws.com/unity-mosaix/unity-chan-demo/index.html)**
 
 [Demo video](https://s3.amazonaws.com/unity-mosaix/mosaix-demo.mp4)
 
