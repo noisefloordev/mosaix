@@ -52,7 +52,7 @@ public class DemoGUI: MonoBehaviour
 
     void ControlWindow()
     {
-        GUILayout.Label("Teapot Mosaic Controls");
+        GUILayout.Label("Mosaic Controls");
 
         MosaixComponent.enabled = GUILayout.Toggle(MosaixComponent.enabled, "Enable mosaic");
 
