@@ -142,8 +142,8 @@ public class MosaixEditor: Editor
         {
             ++EditorGUI.indentLevel;
             obj.MosaicMaterial = (Material) EditorGUILayout.ObjectField("Mosaic Material", obj.MosaicMaterial, typeof(Material), false);
+            obj.ResizeShader = (Shader) EditorGUILayout.ObjectField("Resize Shader", obj.ResizeShader, typeof(Shader), false);
             obj.ExpandEdgesShader = (Shader) EditorGUILayout.ObjectField("Expand Edges Shader", obj.ExpandEdgesShader, typeof(Shader), false);
-            obj.BlitShader = (Shader) EditorGUILayout.ObjectField("Blit Shader", obj.BlitShader, typeof(Shader), false);
             --EditorGUI.indentLevel;
         }
 

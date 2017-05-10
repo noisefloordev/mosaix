@@ -17,6 +17,9 @@ using UnityEditor;
 //
 // This could also be made to replace a specific material on the objects, to apply a mosaic
 // to a specific material but leave the rest of the mesh alone.
+
+#pragma warning disable 0162 // Unreachable code detected
+
 [AddComponentMenu("Effects/Mosaix")]
 #if UNITY_5_1_0
 [HelpURL("https://github.com/unity-effects/mosaix/blob/master/readme.md")]
@@ -103,6 +106,9 @@ public class Mosaix: MonoBehaviour
         }
     }
 
+    public Shader ResizeShader;
+    private Material ResizeMaterial;
+
     // This shader copies the outermost edge of opaque pixels outwards.
     public Shader ExpandEdgesShader;
     private Material ExpandEdgesMaterial;
@@ -110,10 +116,6 @@ public class Mosaix: MonoBehaviour
     // This material calls MosaicShader, which samples our low-resolution mosaic texture in screen space.
     // It can also be another material that calls the mosaic pass.
     public Material MosaicMaterial;
-
-    // A simple shader just used to copy from one texture to another:
-    public Shader BlitShader;
-    private Material BlitMaterial;
 
     // The amount of extra screen space to render in the texture.  If this is 1, the texture is drawn at
     // exactly the size of the screen.  If 2, the texture is expanded by 2x.  The screen will still be
@@ -165,6 +167,9 @@ public class Mosaix: MonoBehaviour
         }
         public RenderTexture Texture;
         public PassType Type;
+
+        // For PassType.Downscale, true if we're filtering on X, false if we're filtering on Y.
+        public bool FilterOnX;
     };
     private List<ImagePass> Passes = new List<ImagePass>();
 
@@ -246,12 +251,12 @@ public class Mosaix: MonoBehaviour
         ThisCamera = gameObject.GetComponent<Camera>();
         if(ThisCamera == null) FatalError("This script must be attached to a camera.");
         if(ExpandEdgesShader == null) FatalError("No ExpandEdgesShader is assigned.");
-        if(BlitShader == null) FatalError("No BlitShader is assigned.");
+        if(ResizeShader == null) FatalError("No ResizeShader is assigned.");
         if(MosaicMaterial == null) FatalError("No MosaicMaterial is assigned.");
 
         // Create materials for our shaders.
+        ResizeMaterial = new Material(ResizeShader);
         ExpandEdgesMaterial = new Material(ExpandEdgesShader);
-        BlitMaterial = new Material(BlitShader);
 
         // Make a copy of the mosaic material.  We may be connected to a material used by multiple
         // instances of this script, and we need the properties we set to not affect the others.
@@ -428,22 +433,22 @@ public class Mosaix: MonoBehaviour
         // If we want 3.5 blocks and we're drawing into a 4x4 texture, we're drawing at 0.875 scale.
         HorizontalMosaicRatio = HorizontalMosaicBlocks / IntegerHorizontalMosaicBlocks;
         VerticalMosaicRatio = VerticalMosaicBlocks / IntegerVerticalMosaicBlocks;
-        while(true)
-        {
-            // Each pass halves the resolution, except for the last pass which snaps to the
-            // final resolution.
-            CurrentWidth /= 2;
-            CurrentHeight /= 2;
-            CurrentWidth = (int) Math.Max(CurrentWidth, IntegerHorizontalMosaicBlocks);
-            CurrentHeight = (int) Math.Max(CurrentHeight, IntegerVerticalMosaicBlocks);
 
-            // If we've already reached the target resolution, we're done.
-            if(Passes[Passes.Count-1].Texture.width == CurrentWidth &&
-               Passes[Passes.Count-1].Texture.height == CurrentHeight)
-                break;
+        // First resize on X.
+        CurrentWidth = IntegerHorizontalMosaicBlocks;
 
-            Passes.Add(new ImagePass(RenderTexture.GetTemporary(CurrentWidth, CurrentHeight, 24, format), PassType.Downscale));
-        }
+        // This resize step is doing a filter over X and will rescale all the way to the mosaic resolution on
+        // X.  While we're doing this, also downscale by up to 50% on Y, since we can do this for free.
+        CurrentHeight = Math.Max(CurrentHeight / 2, IntegerVerticalMosaicBlocks);
+        ImagePass HorizResizePass = new ImagePass(RenderTexture.GetTemporary(CurrentWidth, CurrentHeight, 24, format), PassType.Downscale);
+        HorizResizePass.FilterOnX = true; // box filter on X axis
+        Passes.Add(HorizResizePass);
+
+        // Next, resize on Y.
+        CurrentHeight = IntegerVerticalMosaicBlocks;
+        ImagePass VertResizePass = new ImagePass(RenderTexture.GetTemporary(CurrentWidth, CurrentHeight, 24, format), PassType.Downscale);
+        VertResizePass.FilterOnX = false; // box filter on Y axis
+        Passes.Add(VertResizePass);
 
         // Add the expand pass.
         for(int pass = 0; pass < ExpandPasses; ++pass)
@@ -647,20 +652,108 @@ public class Mosaix: MonoBehaviour
             // This doesn't happen automatically.  We have to enable sRGBWrite manually.
             GL.sRGBWrite = dst.sRGB;
 
-            switch(Passes[i].Type)
+            ImagePass pass = Passes[i];
+            switch(pass.Type)
             {
             case PassType.Downscale:
             {
-                src.filterMode = FilterMode.Bilinear;
-
-                // Set up BlitMaterial.  This is a simple texture that we only use for blitting.  Graphics.Blit
-                // doesn't give us any control, so we have to do the copies ourself.
-                BlitMaterial.SetTexture("_MainTex", src);
-
                 RenderTexture SavedActiveRenderTexture = RenderTexture.active;
                 RenderTexture.active = dst;
 
-                BlitMaterial.SetPass(0);
+                /*
+                 * This pass implements a box filter resize.  This resize is ideal for a mosaic, since
+                 * it can resize with very high ratios, where most other resizes only work up to a 50%
+                 * reduction and need to be iterated.
+                 *
+                 * This doesn't do edge weighting.  Each sample in the box has the same weight, even if
+                 * it doesn't overlap the box completely.  This would make the filter slower and more
+                 * complex, and in our case where we're usually downscaling a lot it doesn't matter.
+                 * However, if you're downscaling by a small ratio you may be better with a regular bilinear
+                 * blit.
+                 * 
+                 * This only averages on one axis at a time: we resize horizontally and then vertically.
+                 * This parallelizes better on the GPU and simplifies the shader, since it only needs one
+                 * loop.
+                 *
+                 * If we're downsampling from 4 pixels to 1:
+                 *
+                 * ABCD -> E
+                 *
+                 * The destination pixel is at the center (between B and C), and we want to sample each
+                 * source pixel once.  UVStep is be the distance from one pixel to another (from A to B).
+                 * UVStart is the distance from the center of the destination pixel (the intersection
+                 * between B and C) to the first pixel to sample (the center of A).  We'll sample 4 times,
+                 * add them together and divide by the number of samples (4).
+                 *
+                 * * Optimization: bilinear filtering
+                 *
+                 * If we're doing box filtering on the X axis, we can also let regular bilinear scaling happen
+                 * on the Y axis.  For example, we can resize from 1000x1000 to 100x500 in one pass.  The box
+                 * filter will be set to the X axis for the large 10:1 ratio, and bilinear filtering will work
+                 * normally on the Y axis.  This lets us halve the amount of texture data we need to process: to
+                 * go from 1000x1000 to 100x100, we'll first go to 100x500 (box filter on X) and then 100x100
+                 * (box filter on Y).  We don't need to do anything special for this to work, we just set the
+                 * texture resolutions accordingly.
+                 *
+                 * * Optimization: partial bilinear scaling
+                 *
+                 * If we're downsampling 4 pixels:
+                 *
+                 * ABCD -> E
+                 *
+                 * Instead of sampling the center of each pixel A B C D with point sampling, we sample the
+                 * intersection of AB and CD with bilinear filtering.  This gives the same result with half
+                 * the number of samples.  (The result can vary slightly since we're sampling an integer number
+                 * of pixels: if we were sampling 9, we'll be sampling 4 or 5, not 4.5.)
+                 */
+
+                src.filterMode = FilterMode.Bilinear;
+
+                // Set up ResizeMaterial.  This is a simple texture that we only use for blitting.  Graphics.Blit
+                // doesn't give us any control, so we have to do the copies ourself.
+                ResizeMaterial.SetTexture("_MainTex", src);
+
+                // See which axis we're resizing on.  We only resize on X or Y in a given pass.
+                int AxisIndex = pass.FilterOnX? 0:1;
+
+                Vector2 SrcSize = new Vector2(src.width, src.height);
+                Vector2 DstSize = new Vector2(dst.width, dst.height);
+                //Vector2 SrcSize = new Vector2(4, 4);
+                //Vector2 DstSize = new Vector2(1, 1);
+
+                float SrcToDstRatio = (float) SrcSize[AxisIndex] / DstSize[AxisIndex];
+                const bool BilinearResizeOptimization = true;
+
+                // If we're resampling ABCD -> E, by default the UV will be at the center, between BC.
+                Vector2 UVStart = new Vector2(0,0);
+                UVStart[AxisIndex] = -SrcToDstRatio/2; // left edge of A, in source pixels
+                if(BilinearResizeOptimization)
+                    UVStart[AxisIndex] += 1.0f; // between AB, in source pixels
+                else
+                    UVStart[AxisIndex] += 0.5f; // center of A, in source pixels
+                UVStart[AxisIndex] /= SrcSize[AxisIndex]; // convert to UVs
+
+                // Create (x,0) start/steps if we're resizing on X, otherwise (0,x).
+                ResizeMaterial.SetVector("UVStart", UVStart);
+
+                // If we step 1 / SrcSize we'll move by one pixel per sample.  Step by 2 / SrcSize to
+                // step by two pixels.
+                Vector2 UVStep = new Vector2(0,0);
+                UVStep[AxisIndex] = BilinearResizeOptimization? 2.0f:1.0f;
+                UVStep[AxisIndex] /= SrcSize[AxisIndex];
+                ResizeMaterial.SetVector("UVStep", UVStep);
+
+                int Samples = (int) Math.Round(SrcToDstRatio);
+                if(BilinearResizeOptimization)
+                    Samples /= 2;
+                Samples = Math.Max(Samples, 1);
+
+                ResizeMaterial.SetInt("Samples", (int) Samples);
+                ResizeMaterial.SetFloat("SampleFactor", 1.0f / Samples);
+                
+                // Debug.Log(src + " -> " + dst + ", " + SrcToDstRatio + ", " + "start: " + UVStart + ", " + "step: " + UVStep + ", samples " + Samples);
+
+                ResizeMaterial.SetPass(0);
 
                 GL.PushMatrix();
                 GL.LoadOrtho();
