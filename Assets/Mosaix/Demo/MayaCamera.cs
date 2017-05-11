@@ -45,6 +45,17 @@ public class MayaCamera: MonoBehaviour
     void OnApplicationFocus(bool b) { HasFocus = b; }
 
     bool UpdatedCollidersAtLeastOnce = false;
+    void OnEnable() 
+    {
+#if UNITY_WEBGL                
+        // Updating colliders is slow on WebGL.  Only do it once, since our demo model doesn't move
+        // enough that updating it again is important.  Unity wants us to do this by creating a
+        // bunch of capsule colliders to approximate the model, but that's not worth it for this
+        // simple demo.
+        SkinnedMeshCollider.UpdateAllColliders();
+#endif
+    }
+
     void Update() 
     {
         Camera camera = gameObject.GetComponent<Camera>();
@@ -62,17 +73,7 @@ public class MayaCamera: MonoBehaviour
             {
                 MousePosition = Input.mousePosition;
 
-                // Updating colliders is slow on WebGL.  Only do it once, since our demo model doesn't move
-                // enough that updating it again is important.  Unity wants us to do this by creating a
-                // bunch of capsule colliders to approximate the model, but that's not worth it for this
-                // simple demo.
-                bool UpdateColliders = false;
-#if UNITY_WEBGL                
-                if(!UpdatedCollidersAtLeastOnce)
-                    UpdateColliders = true;
-#else
-                UpdateColliders = true;
-#endif
+#if !UNITY_WEBGL                
                 if(UpdateColliders)
                 {
                     // If we have any SkinnedMeshColliders, update them so we can test if the user
@@ -81,6 +82,7 @@ public class MayaCamera: MonoBehaviour
 
                     UpdatedCollidersAtLeastOnce = true;
                 }
+#endif
 
                 // Find the object the mouse is over.  If there isn't one, keep the old origin.
                 // Maya actually remembers the distance to the most recent click (centerOfInterest)
