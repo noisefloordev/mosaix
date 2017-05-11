@@ -602,6 +602,10 @@ public class Mosaix: MonoBehaviour
             MosaicCamera.cullingMask =  (1 << MosaicLayer);
         }
 
+        // The camera might have a modified viewport to set where it appears on screen.  Ignore this for
+        // the MosaicCamera.
+        MosaicCamera.rect = new Rect(0, 0, 1, 1);
+
         // Match the projection matrix to the main camera, so we render the same thing even if
         // the aspect ratio of the RenderTexture isn't exactly the same as the screen.
         MosaicCamera.projectionMatrix = ThisCamera.projectionMatrix;
