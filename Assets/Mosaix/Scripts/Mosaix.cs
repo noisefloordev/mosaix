@@ -364,12 +364,17 @@ public class Mosaix: MonoBehaviour
 
         int CurrentWidth = Width, CurrentHeight = Height;
 
+        // The final number of mosaic blocks (resolution of the mosaic texture):
+        int IntegerHorizontalMosaicBlocks = (int) Math.Ceiling(HorizontalMosaicBlocks);
+        int IntegerVerticalMosaicBlocks = (int) Math.Ceiling(VerticalMosaicBlocks);
+
         // If we're doing a low-resolution render, render at the block size, and we won't have
-        // any rescaling passes below.
+        // any rescaling passes below.  Snap HorizontalMosaicBlocks/VerticalMosaicBlocks as well
+        // in this mode (we won't support fractional mosaic sizes here).
         if(!HighResolutionRender)
         {
-            CurrentWidth = (int) HorizontalMosaicBlocks;
-            CurrentHeight = (int) VerticalMosaicBlocks;
+            HorizontalMosaicBlocks = CurrentWidth = IntegerHorizontalMosaicBlocks;
+            VerticalMosaicBlocks = CurrentHeight = IntegerVerticalMosaicBlocks;
         }
 
         // Check if we actually need to recreate textures.
@@ -426,29 +431,31 @@ public class Mosaix: MonoBehaviour
                         RenderTextureReadWrite.Default, NewSetup.AntiAliasing),
                    PassType.Render));
 
-        // Create a texture for each downscale step.
-        int IntegerHorizontalMosaicBlocks = (int) Math.Ceiling(HorizontalMosaicBlocks);
-        int IntegerVerticalMosaicBlocks = (int) Math.Ceiling(VerticalMosaicBlocks);
 
         // If we want 3.5 blocks and we're drawing into a 4x4 texture, we're drawing at 0.875 scale.
         HorizontalMosaicRatio = HorizontalMosaicBlocks / IntegerHorizontalMosaicBlocks;
         VerticalMosaicRatio = VerticalMosaicBlocks / IntegerVerticalMosaicBlocks;
 
-        // First resize on X.
-        CurrentWidth = IntegerHorizontalMosaicBlocks;
+        // If we're in normal (high-resolution) mode, downscale to the mosaic.  If we're in low-res mode, we're
+        // already at mosaic resolution and can skip these passes.
+        if(HighResolutionRender)
+        {
+            // First resize on X.
+            CurrentWidth = IntegerHorizontalMosaicBlocks;
 
-        // This resize step is doing a filter over X and will rescale all the way to the mosaic resolution on
-        // X.  While we're doing this, also downscale by up to 50% on Y, since we can do this for free.
-        CurrentHeight = Math.Max(CurrentHeight / 2, IntegerVerticalMosaicBlocks);
-        ImagePass HorizResizePass = new ImagePass(RenderTexture.GetTemporary(CurrentWidth, CurrentHeight, 24, format), PassType.Downscale);
-        HorizResizePass.FilterOnX = true; // box filter on X axis
-        Passes.Add(HorizResizePass);
+            // This resize step is doing a filter over X and will rescale all the way to the mosaic resolution on
+            // X.  While we're doing this, also downscale by up to 50% on Y, since we can do this for free.
+            CurrentHeight = Math.Max(CurrentHeight / 2, IntegerVerticalMosaicBlocks);
+            ImagePass HorizResizePass = new ImagePass(RenderTexture.GetTemporary(CurrentWidth, CurrentHeight, 24, format), PassType.Downscale);
+            HorizResizePass.FilterOnX = true; // box filter on X axis
+            Passes.Add(HorizResizePass);
 
-        // Next, resize on Y.
-        CurrentHeight = IntegerVerticalMosaicBlocks;
-        ImagePass VertResizePass = new ImagePass(RenderTexture.GetTemporary(CurrentWidth, CurrentHeight, 24, format), PassType.Downscale);
-        VertResizePass.FilterOnX = false; // box filter on Y axis
-        Passes.Add(VertResizePass);
+            // Next, resize on Y.
+            CurrentHeight = IntegerVerticalMosaicBlocks;
+            ImagePass VertResizePass = new ImagePass(RenderTexture.GetTemporary(CurrentWidth, CurrentHeight, 24, format), PassType.Downscale);
+            VertResizePass.FilterOnX = false; // box filter on Y axis
+            Passes.Add(VertResizePass);
+        }
 
         // Add the expand pass.
         for(int pass = 0; pass < ExpandPasses; ++pass)
