@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Unity Mosaix</h1>
+
+<p>
+For more detailed documentation, see the <a href="https://github.com/unity-effects/mosaix/blob/master/readme.md#readme">online documentation on GitHub</a>.
+<p>
+This code is in the public domain.
+
+<h2>Usage</h2>
+<ul>
+<li>Add a display layer for mosaiced objects, and put the objects you want mosaiced into it.</li>
+<li>Select your camera and add Component → Effects → Mosaix.</li>
+<li>On the new Mosaix component, select the display layer you created above.</li>
+<li>Play the scene.</li>
+</ul>
+
+<h2>Settings</h2>
+<strong>Mosaic Layer</strong> The display layer to mosaic.<br>
+<strong>Mosaic Blocks</strong> The number of mosaic blocks.  Higher numbers give smaller mosaic blocks.
+<p>
+<strong>Masking/Texture masking</strong> If enabled, the mosaic will be masked using a texture.<br>
+<strong>Masking/Masking Texture</strong> If <strong>Texture masking</strong> is enabled, this is the texture to use as a mask.<br>
+<strong>Masking/Sphere masking</strong> If enabled, the mosaic will only display within a bounding sphere.<br>
+<strong>Masking/Masking Sphere</strong> If <strong>Sphere masking</strong> is enabled, this is the sphere to use as a mask.<br>
+<strong>Masking/Mask Fade</strong> If <strong>Sphere masking</strong> is enabled, this is how smoothly to fade out the mosaic outside the sphere.
+<p>
+<strong>Anchoring/Anchor</strong> A transform to use as a mosaic anchor, if desired.<br>
+<strong>Anchoring/Follow Anchor</strong> If enabled, the mosaic will follow the anchor around on screen instead of being fixed in place.<br>
+<strong>Anchoring/Scale mosaic size</strong> If enabled, the mosaic will get bigger as the anchor gets closer to the camera.
+<p>
+<strong>Advanced Settings/Shadows Cast On Mosaic</strong> Whether other objects cast shadows on the mosaic.  Turning this
+off may be faster, but may look wrong depending on your scene's lighting.<br>
+<strong>Advanced Settings/High Resolution Render</strong> A high-quality mode is used to render the mosaic.
+This results in less flicker as objects move, more accurate lighting, and is required
+for masking and alpha.<br>
+<strong>Advanced Settings/Alpha</strong> Fade out the mosaic.  This can be animated to transition the mosaic on and off smoothly.<br>
+<strong>Advanced Settings/Render Scale</strong> How far to render offscreen for creating the mosaic.  A value of 1.1 is
+recommended.
+<p>
+<strong>Shaders/Mosaic Material</strong> The material to use when rendering the mosaic.  This is usually <strong>Mosaix/Shaders/Mosaic.mat</strong>,
+but can be set to another material to layer other effects on top of the mosaic.<br>
+<strong>Shaders/Resize Shader</strong> This should be set to <strong>Mosaix/Shaders/Resize.shader</strong>.<br>
+<strong>Shaders/Expand Edges Shader</strong> This should be set to <strong>Mosaix/Shaders/ExpandEdges.shader</strong>.
+
+ 
