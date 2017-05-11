@@ -26,11 +26,11 @@ public class DemoGUI: MonoBehaviour
     {
         GUILayout.BeginArea(new Rect(0, 0, Screen.width, Screen.height));
             GUILayout.BeginHorizontal();
-            GUILayout.Space(20); // left padding
+            GUILayout.Space(10); // left padding
                 GUILayout.BeginVertical();
                     GUILayout.FlexibleSpace(); // bottom align
                     GUILayout.Label("Hold ALT to navigate with the mouse", MakePaddedBoxStyle(15,5));
-                    GUILayout.Space(20); // bottom padding
+                    GUILayout.Space(10); // bottom padding
                 GUILayout.EndVertical();
             GUILayout.FlexibleSpace(); // right padding
             GUILayout.EndHorizontal();
