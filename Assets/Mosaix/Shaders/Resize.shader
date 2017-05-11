@@ -1,7 +1,7 @@
 // Disable Unity's horrifying automatic upgrade thing that modifies your
 // source code without asking: UNITY_SHADER_NO_UPGRADE
 
-Shader "Hidden/Mosaix/BoxResize" {
+Shader "Hidden/Mosaix/Resize" {
 
 Properties {
     _MainTex ("Base (RGB)", 2D) = "white" {}
