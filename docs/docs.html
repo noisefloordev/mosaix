@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Mosaix - A better Unity mosaic</title>
+
+<link rel="stylesheet" href="style.css">
+<script src="script.js" type="text/javascript"></script>
+
+<body>
+
+<h3 style="text-align: center;">Mosaix, a better Unity mosaic</h3>
+
+<div class=header>
+    <div><a href=index.html>Intro</a></div>
+    <div><a href=features.html>Features</a></div>
+    <div><a href=docs.html>Docs</a></div>
+    <div><a href=https://github.com/unity-effects/mosaix>Free&nbsp;on&nbsp;GitHub</a></div>
+</div>
+
+<div class=content>
+
+<h2>Setup</h2>
+<p>See "Test scene\Demo scene.unity" for an example.
+<ul>
+<li>In the inspector, Layer -&gt; Add Layer, and create a layer to mosaic.<br>
+<img src="images/Setup_AddLayer.png" alt="" style="max-width:100%;">
+</li>
+</li>
+<li>Select your camera and add Component → Effects → Mosaix.</li>
+<li>Set "Mosaic Layer" to the layer you created.</li>
+<li>Put objects to mosaic in the new layer.<br>
+<img src="images/Setup_PutMeshInLayer.png" alt="" style="max-width:100%;">
+<li>Play the scene.</li>
+</ul>
+<h2>Sphere masks</h2>
+<p>To use sphere masks, enable <strong>Sphere masking</strong>, and connect a 3D sphere to <strong>Masking Sphere</strong>.
+Place the sphere, and parent it correctly so it follows the object to be pixelated.  Once the
+sphere is placed, disable its Mesh Renderer so the sphere isn't visible.
+<p>The sphere can be scaled and rotated to cover oblong areas.  The <strong>Sphere Collider</strong> component should
+be deleted from the sphere, so objects don't collide with it.
+<p><strong>Mask Fade</strong> can be set to fade the mosaic away smoothly outside the sphere.  At 0, the
+mosaic cuts off sharply at the edge of the sphere.
+<h2>Texture masks</h2>
+To mask with a texture, enable <strong>Texture masking</strong>, and select a <strong>Masking Texture</strong>.
+White areas in the mask will be pixelated and black ones won't.  The masking texture will
+use the same UVs as the models being rendered.
+<p>This works best if the masking layer only contains a single object, since this
+only uses a single texture.
+<h2>Anchoring</h2>
+<p>To use anchoring, connect a transform to <strong>Anchor</strong>, then enable <strong>Follow Anchor</strong> or
+<strong>Scale mosaic size</strong>.
+<p>If <strong>Follow Anchor</strong> is enabled, the mosaic lines follow the anchor as it moves around
+on screen.
+<p>If <strong>Scale mosaic size</strong> is enabled, the mosaic will also scale itself as the anchor gets
+further and closer to the camera.  This allows the mosaic to be smaller when the object is
+far from the camera and finer as the object is closer to the camera.
+<h2>Integrating with cartoon outline shaders</h2>
+See <strong>DemoUnityChan.unity</strong> for an example of integrating toon shader outlines on
+top of the mosaic shader.  The
+<a href=https://github.com/unity-effects/mosaix/blob/master/Assets/Mosaix/DemoUnityChan/Shaders/UnityChanSkinMosaic.shader>
+UnityChanSkinMosaic</a> shader invokes the mosaic shader with <code>UsePass "FX/Mosaix/MOSAIC"</code>.
+A material using this shader is then assigned to <strong>Mosaic Material</strong> in place of
+Mosaic.mat.
+<h2>Multiple mosaics</h2>
+<p>To mosaic two objects separately, add a second Mosaix script to your camera, and use it
+with a separate layer.  The objects won't bleed together, and can use different settings,
+such as a different number of mosaic blocks.
+<h2>All settings</h2>
+<p><strong>Mosaic Layer</strong> The display layer to mosaic.<br>
+<strong>Mosaic Blocks</strong> The number of mosaic blocks.  Higher numbers give smaller mosaic blocks.
+<p><strong>Masking/Texture masking</strong> If enabled, the mosaic will be masked using a texture.<br>
+<strong>Masking/Masking Texture</strong> If <strong>Texture masking</strong> is enabled, this is the texture to use as a mask.<br>
+<strong>Masking/Sphere masking</strong> If enabled, the mosaic will only display within a bounding sphere.<br>
+<strong>Masking/Masking Sphere</strong> If <strong>Sphere masking</strong> is enabled, this is the sphere to use as a mask.<br>
+<strong>Masking/Mask Fade</strong> If <strong>Sphere masking</strong> is enabled, this is how smoothly to fade out the mosaic outside the sphere.
+<p><strong>Anchoring/Anchor</strong> A transform to use as a mosaic anchor, if desired.<br>
+<strong>Anchoring/Follow Anchor</strong> If enabled, the mosaic will follow the anchor around on screen instead of being fixed in place.<br>
+<strong>Anchoring/Scale mosaic size</strong> If enabled, the mosaic will get bigger as the anchor gets closer to the camera.
+<p><strong>Advanced Settings/Shadows Cast On Mosaic</strong> Whether other objects cast shadows on the mosaic.  Turning this
+off may be faster, but may look wrong depending on your scene's lighting.<br>
+<strong>Advanced Settings/High Resolution Render</strong> A high-quality mode is used to render the mosaic.
+This results in less flicker as objects move, more accurate lighting, and is required
+for masking and alpha.<br>
+<strong>Advanced Settings/Alpha</strong> Fade out the mosaic.  This can be animated to transition the mosaic on and off smoothly.<br>
+<strong>Advanced Settings/Render Scale</strong> How far to render offscreen for creating the mosaic.  A value of 1.1 is
+recommended.
+<p><strong>Shaders/Mosaic Material</strong> The material to use when rendering the mosaic.  This is usually <strong>Mosaix/Shaders/Mosaic.mat</strong>,
+but can be set to another material to layer other effects on top of the mosaic.<br>
+<strong>Shaders/Resize Shader</strong> This should be set to <strong>Mosaix/Shaders/Resize.shader</strong>.<br>
+<strong>Shaders/Expand Edges Shader</strong> This should be set to <strong>Mosaix/Shaders/ExpandEdges.shader</strong>.
+<h2>Limitations</h2>
+<p>Transparent objects aren't supported.
+
+</div>
+    
+
+</body>
+</html>
