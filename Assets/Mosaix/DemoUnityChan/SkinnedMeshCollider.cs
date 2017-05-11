@@ -37,6 +37,7 @@ public class SkinnedMeshCollider: MonoBehaviour
     void OnEnable()
     {
         SkinnedMeshColliders.Add(this);
+        UpdateCollider();
     }
 
     void OnDisable()
