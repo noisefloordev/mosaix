@@ -4,6 +4,7 @@ public class DemoGUI: MonoBehaviour
 {
     public bool ShowSphere = true;
     public float MosaicBlocks = 20;
+    bool Open = false;
     float SpherePosition = 0;
 
     // This is true in the simple demo where we show a scale control, and false in the character
@@ -46,8 +47,10 @@ public class DemoGUI: MonoBehaviour
         GUILayout.EndArea();
 
         GUILayout.BeginArea(new Rect(10, 10, Screen.width-20, Screen.height-20));
-            GUILayout.BeginVertical(MakePaddedBoxStyle(10,10), GUILayout.MinWidth(250));
-            ControlWindow();
+            GUILayout.BeginVertical(MakePaddedBoxStyle(10,10), GUILayout.MinWidth(Open? 250:10));
+            Open = GUILayout.Toggle(Open, "Mosaic Controls");
+            if(Open)
+                ControlWindow();
             GUILayout.EndVertical();
         GUILayout.EndArea();
 
@@ -56,8 +59,6 @@ public class DemoGUI: MonoBehaviour
 
     void ControlWindow()
     {
-        GUILayout.Label("Mosaic Controls");
-
         MosaixComponent.enabled = GUILayout.Toggle(MosaixComponent.enabled, "Enable mosaic");
 
         GUILayout.BeginHorizontal();
