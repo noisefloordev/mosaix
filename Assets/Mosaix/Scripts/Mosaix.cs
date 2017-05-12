@@ -19,6 +19,7 @@ using UnityEditor;
 // to a specific material but leave the rest of the mesh alone.
 
 #pragma warning disable 0162 // Unreachable code detected
+#pragma warning disable 0429 // Unreachable expression code detected
 
 [AddComponentMenu("Effects/Mosaix")]
 #if UNITY_5_1_0
