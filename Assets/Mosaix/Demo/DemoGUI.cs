@@ -41,7 +41,7 @@ public class DemoGUI: MonoBehaviour
             GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
                 if(GUILayout.Button("Open on GitHub"))
-                    Application.OpenURL("https://github.com/unity-effects/mosaix");
+                    Application.OpenURL("https://github.com/noisefloordev/mosaix");
             GUILayout.Space(10); // right padding
             GUILayout.EndHorizontal();
         GUILayout.EndArea();

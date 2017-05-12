@@ -23,7 +23,7 @@ using UnityEditor;
 
 [AddComponentMenu("Effects/Mosaix")]
 #if UNITY_5_1_0
-[HelpURL("https://github.com/unity-effects/mosaix/blob/master/readme.md")]
+[HelpURL("https://noisefloordev.github.io/mosaix/docs.html")]
 #endif
 public class Mosaix: MonoBehaviour
 {
