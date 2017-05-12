@@ -62,16 +62,14 @@ public class MayaCamera: MonoBehaviour
                 MousePosition = Input.mousePosition;
 
 #if !UNITY_WEBGL                
-                // Updating colliders is slow on WebGL.  Just use the initial pose for collision,
-                // since our demo model doesn't move enough that updating it again is important.
-                // Unity wants us to do this by creating a bunch of capsule colliders to approximate
-                // the model, but that's not worth it for this simple demo.
-                if(UpdateColliders)
-                {
-                    // If we have any SkinnedMeshColliders, update them so we can test if the user
-                    // clicked on a skinned mesh.
-                    SkinnedMeshCollider.UpdateAllColliders();
-                }
+                // If we have any SkinnedMeshColliders, update them so we can test if the user
+                // clicked on a skinned mesh.
+                //
+                // This is slow on WebGL, so we just use the initial pose for collision, since the
+                // demo model doesn't move enough that updating it again is important.  Unity wants
+                // us to do this by creating a bunch of capsule colliders to approximate the model,
+                // but that's not worth it for this simple demo.
+                SkinnedMeshCollider.UpdateAllColliders();
 #endif
 
                 // Find the object the mouse is over.  If there isn't one, keep the old origin.
