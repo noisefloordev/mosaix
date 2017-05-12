@@ -44,9 +44,15 @@ code {
     padding-bottom: 25px;
 }
 .header > div {
-    flex: 1 1;
+    flex: 1 1 auto;
     text-align: center;
     background-color: #EEEEEE;
+    border: 0px solid #404040;
+    border-left-width: 4px;
+    border-right-width: 4px;
+}
+.header a:hover {
+    background-color: #FFFF00;
 }
 .header > div[data-active] > button {
     background-color: #FFFF00;

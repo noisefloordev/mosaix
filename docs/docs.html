@@ -14,17 +14,21 @@
     <div><a href=index.html>Intro</a></div>
     <div><a href=features.html>Features</a></div>
     <div><a href=docs.html>Docs</a></div>
-    <div><a href=https://github.com/noisefloordev/mosaix>Free&nbsp;on&nbsp;GitHub</a></div>
+    <div><a href=https://github.com/noisefloordev/mosaix>GitHub</a></div>
+    <div><a href="mailto:noisefloordev@gmail.com">Contact</a></div>
+    <div>
+        <a href=http://noisefloordev.s3-website-us-east-1.amazonaws.com/mosaix/downloads/latest.unitypackage>
+            <strong>Download</strong>
+        </a>
+    </div>
 </div>
 
 <div class=content>
 
 <h2>Setup</h2>
-<p>See "Test scene\Demo scene.unity" for an example.
 <ul>
 <li>In the inspector, Layer -&gt; Add Layer, and create a layer to mosaic.<br>
 <img src="images/Setup_AddLayer.png" alt="" style="max-width:100%;">
-</li>
 </li>
 <li>Select your camera and add Component → Effects → Mosaix.</li>
 <li>Set "Mosaic Layer" to the layer you created.</li>
@@ -89,10 +93,10 @@ but can be set to another material to layer other effects on top of the mosaic.<
 <strong>Shaders/Resize Shader</strong> This should be set to <strong>Mosaix/Shaders/Resize.shader</strong>.<br>
 <strong>Shaders/Expand Edges Shader</strong> This should be set to <strong>Mosaix/Shaders/ExpandEdges.shader</strong>.
 <h2>Limitations</h2>
-<p>Transparent objects aren't supported.
-
+Pixelating transparent objects aren't supported.
+<p>
+Objects in reflection probes won't be pixelated.
 </div>
-    
 
 </body>
 </html>
