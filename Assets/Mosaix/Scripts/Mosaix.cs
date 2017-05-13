@@ -217,6 +217,12 @@ public class Mosaix: MonoBehaviour
     {
         EnabledMosaixScripts.Add(this);
 
+        ThisCamera = gameObject.GetComponent<Camera>();
+        if(ThisCamera == null) FatalError("This script must be attached to a camera.");
+        if(ExpandEdgesShader == null) FatalError("No ExpandEdgesShader is assigned.");
+        if(ResizeShader == null) FatalError("No ResizeShader is assigned.");
+        if(MosaicMaterial == null) FatalError("No MosaicMaterial is assigned.");
+
         // If more than one of these scripts is attached to the same layer on the same camera, our
         // material replacement in OnPreRender and OnPostRender won't behave correctly.  This is
         // because if multiple scripts have PreRender and PostRenders, Unity calls them in linear
@@ -238,22 +244,8 @@ public class Mosaix: MonoBehaviour
                 continue;
 
             Debug.Log("Warning: Multiple Mosaix scripts have been applied to the same display layer " +
-                    LayerMask.LayerToName(MosaicLayer) + " on camera " + ThisCamera + ".  This may not work.");
+                    LayerMask.LayerToName(MosaicLayer) + " on camera " + ThisCamera.name + ".  This may not work.");
         }
-    }
-
-    void OnDisable()
-    {
-        EnabledMosaixScripts.Remove(this);
-    }
-
-    void Start()
-    {
-        ThisCamera = gameObject.GetComponent<Camera>();
-        if(ThisCamera == null) FatalError("This script must be attached to a camera.");
-        if(ExpandEdgesShader == null) FatalError("No ExpandEdgesShader is assigned.");
-        if(ResizeShader == null) FatalError("No ResizeShader is assigned.");
-        if(MosaicMaterial == null) FatalError("No MosaicMaterial is assigned.");
 
         // Create materials for our shaders.
         ResizeMaterial = new Material(ResizeShader);
@@ -275,6 +267,11 @@ public class Mosaix: MonoBehaviour
         MosaicCameraGameObject.SetActive(false);
 
         SetupTextures();
+    }
+
+    void OnDisable()
+    {
+        EnabledMosaixScripts.Remove(this);
     }
 
     void OnDestroy()
