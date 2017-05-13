@@ -292,6 +292,13 @@ public class Mosaix: MonoBehaviour
 	return Mathf.Floor((val + interval/2.0f)/interval) * interval;
     }
 
+    // Return true if ResizeShader is using the box resize shader, or false if it fell back on
+    // bilinear.
+    private bool UsingBoxResize()
+    {
+        return ResizeMaterial.GetTag("ResizeShader", false) == "Box";
+    }
+
     private void SetupTextures()
     {
         int Width = ThisCamera.pixelWidth;
@@ -438,21 +445,41 @@ public class Mosaix: MonoBehaviour
         // already at mosaic resolution and can skip these passes.
         if(HighResolutionRender)
         {
-            // First resize on X.
-            CurrentWidth = IntegerHorizontalMosaicBlocks;
+            if(UsingBoxResize())
+            {
+                // First resize on X.
+                CurrentWidth = IntegerHorizontalMosaicBlocks;
 
-            // This resize step is doing a filter over X and will rescale all the way to the mosaic resolution on
-            // X.  While we're doing this, also downscale by up to 50% on Y, since we can do this for free.
-            CurrentHeight = Math.Max(CurrentHeight / 2, IntegerVerticalMosaicBlocks);
-            ImagePass HorizResizePass = new ImagePass(RenderTexture.GetTemporary(CurrentWidth, CurrentHeight, 24, format), PassType.Downscale);
-            HorizResizePass.FilterOnX = true; // box filter on X axis
-            Passes.Add(HorizResizePass);
+                // This resize step is doing a filter over X and will rescale all the way to the mosaic resolution on
+                // X.  While we're doing this, also downscale by up to 50% on Y, since we can do this for free.
+                CurrentHeight = Math.Max(CurrentHeight / 2, IntegerVerticalMosaicBlocks);
+                ImagePass HorizResizePass = new ImagePass(RenderTexture.GetTemporary(CurrentWidth, CurrentHeight, 24, format), PassType.Downscale);
+                HorizResizePass.FilterOnX = true; // box filter on X axis
+                Passes.Add(HorizResizePass);
 
-            // Next, resize on Y.
-            CurrentHeight = IntegerVerticalMosaicBlocks;
-            ImagePass VertResizePass = new ImagePass(RenderTexture.GetTemporary(CurrentWidth, CurrentHeight, 24, format), PassType.Downscale);
-            VertResizePass.FilterOnX = false; // box filter on Y axis
-            Passes.Add(VertResizePass);
+                // Next, resize on Y.
+                CurrentHeight = IntegerVerticalMosaicBlocks;
+                ImagePass VertResizePass = new ImagePass(RenderTexture.GetTemporary(CurrentWidth, CurrentHeight, 24, format), PassType.Downscale);
+                VertResizePass.FilterOnX = false; // box filter on Y axis
+                Passes.Add(VertResizePass);
+            } else {
+                while(true)
+                {
+                    // Each pass halves the resolution, except for the last pass which snaps to the
+                    // final resolution.
+                    CurrentWidth /= 2;
+                    CurrentHeight /= 2;
+                    CurrentWidth = (int) Math.Max(CurrentWidth, IntegerHorizontalMosaicBlocks);
+                    CurrentHeight = (int) Math.Max(CurrentHeight, IntegerVerticalMosaicBlocks);
+
+                    // If we've already reached the target resolution, we're done.
+                    if(Passes[Passes.Count-1].Texture.width == CurrentWidth &&
+                       Passes[Passes.Count-1].Texture.height == CurrentHeight)
+                        break;
+
+                    Passes.Add(new ImagePass(RenderTexture.GetTemporary(CurrentWidth, CurrentHeight, 24, format), PassType.Downscale));
+                }
+            }
         }
 
         // Add the expand pass.
@@ -714,6 +741,10 @@ public class Mosaix: MonoBehaviour
                  * intersection of AB and CD with bilinear filtering.  This gives the same result with half
                  * the number of samples.  (The result can vary slightly since we're sampling an integer number
                  * of pixels: if we were sampling 9, we'll be sampling 4 or 5, not 4.5.)
+                 *
+                 * Note: If the box filter shader isn't supported (this happens on WebGL 1.0), we'll be using
+                 * a bilinear scale instead.  That shader doesn't need the properties we're setting up here,
+                 * but it'll just ignore them.
                  */
 
                 src.filterMode = FilterMode.Bilinear;

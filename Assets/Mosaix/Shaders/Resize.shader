@@ -10,15 +10,15 @@ Properties {
 SubShader {
     ZWrite Off
     ZTest Off
+    Blend One Zero
+    Tags { "ResizeShader" = "Box" }
 
     Pass {  
-        Blend One Zero
-
         CGPROGRAM
         #pragma vertex vert
         #pragma fragment frag
-        #pragma target 2.0
-        
+        #pragma target 3.0
+
         #include "UnityCG.cginc"
         #include "UnityCompat.cginc"
 
@@ -61,6 +61,47 @@ SubShader {
             return half4(result);
         }    
                 
+        ENDCG
+    }
+}
+
+SubShader {
+    Tags { "ResizeShader" = "Blit" }
+
+    Pass {
+        CGPROGRAM
+        #pragma vertex vert
+        #pragma fragment frag
+        #pragma target 2.0
+
+        #include "UnityCG.cginc"
+        #include "UnityCompat.cginc"
+
+        struct appdata_t {
+            float4 vertex : POSITION;
+            float2 texcoord : TEXCOORD0;
+        };
+
+        struct v2f {
+            float4 vertex : SV_POSITION;
+            float2 texcoord : TEXCOORD0;
+        };
+
+        sampler2D _MainTex;
+        float4 _MainTex_ST;
+
+        v2f vert(appdata_t v)
+        {
+            v2f o;
+            o.vertex = UnityObjectToClipPos(v.vertex);
+            o.texcoord = v.texcoord;
+            return o;
+        }
+
+        half4 frag(v2f i) : SV_Target
+        {
+            return tex2D(_MainTex, i.texcoord);
+        }
         ENDCG
     }
 }
