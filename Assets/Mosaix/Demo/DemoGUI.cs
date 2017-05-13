@@ -22,6 +22,11 @@ public class DemoGUI: MonoBehaviour
         return PaddedBox;
     }
     
+    void OnEnable()
+    {
+        Refresh();
+    }
+
     void OnGUI()
     {
         GUILayout.BeginArea(new Rect(0, 0, Screen.width, Screen.height));
