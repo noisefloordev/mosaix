@@ -30,18 +30,6 @@ public class DemoGUI: MonoBehaviour
     void OnGUI()
     {
         GUILayout.BeginArea(new Rect(0, 0, Screen.width, Screen.height));
-            GUILayout.BeginHorizontal();
-            GUILayout.Space(10); // left padding
-                GUILayout.BeginVertical();
-                    GUILayout.FlexibleSpace(); // bottom align
-                    GUILayout.Label("Hold ALT to navigate with the mouse", MakePaddedBoxStyle(15,5));
-                    GUILayout.Space(10); // bottom padding
-                GUILayout.EndVertical();
-            GUILayout.FlexibleSpace(); // right padding
-            GUILayout.EndHorizontal();
-        GUILayout.EndArea();
-
-        GUILayout.BeginArea(new Rect(0, 0, Screen.width, Screen.height));
             GUILayout.Space(10); // top padding
             GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
@@ -57,6 +45,26 @@ public class DemoGUI: MonoBehaviour
             if(Open)
                 ControlWindow();
             GUILayout.EndVertical();
+
+            // Hack: Tell MayaCamera where our main UI box is, so clicking inside it doesn't move the
+            // camera.  There's no GUILayout API to do this.
+            MayaCamera mayaCamera = gameObject.GetComponent<MayaCamera>();
+            if(Event.current.type == EventType.Repaint && mayaCamera != null)
+            {
+                // Get the rect for the vertical area we just drew.
+                Rect LatestUIRect = GUILayoutUtility.GetLastRect();
+
+                // GetLastRect doesn't take the area position into account, so we have to add the
+                // origin given to BeginArea.  This is not a good API.
+                LatestUIRect.x += 10;
+                LatestUIRect.y += 10;
+
+                // Different coordinate spaces:
+                LatestUIRect.y = Screen.height - LatestUIRect.x - LatestUIRect.height;
+
+                mayaCamera.IgnoreRect = LatestUIRect;
+            }
+
         GUILayout.EndArea();
 
         Refresh();

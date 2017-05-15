@@ -1,5 +1,6 @@
 // Rewritten based on https://gist.githubusercontent.com/JISyed/5017805/raw/aa69ce701f3d5a13a9f87880dee776d2208f71cb/MoveCamera.cs
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 // TODO Maya zooms exponentially: as you zoom further from the center of interest,
 // zooming moves faster.  We only zoom linearly.
@@ -44,17 +45,29 @@ public class MayaCamera: MonoBehaviour
     bool HasFocus = true;
     void OnApplicationFocus(bool b) { HasFocus = b; }
 
+    // This is set by DemoGUI to tell us where the GUI is.
+    [System.NonSerialized]
+    public Rect IgnoreRect;
+
+    void OnMouseDown()
+    {
+        Debug.Log("xxx");
+    }
+
     void Update() 
     {
         Camera camera = gameObject.GetComponent<Camera>();
 
-        if(mode == MouseMode.None && (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)))
+        if(mode == MouseMode.None)
         {
-            if(Input.GetMouseButton(0))
+            if(IgnoreRect.Contains(Input.mousePosition))
+                return;
+
+            if(Input.GetMouseButtonDown(0))
                 mode = MouseMode.Tumbling;
-            else if(Input.GetMouseButton(1))
+            else if(Input.GetMouseButtonDown(1))
                 mode = MouseMode.Zooming;
-            else if(Input.GetMouseButton(2))
+            else if(Input.GetMouseButtonDown(2))
                 mode = MouseMode.Panning;
 
             if(mode != MouseMode.None)
