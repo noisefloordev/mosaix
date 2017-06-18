@@ -215,6 +215,13 @@ public class Mosaix: MonoBehaviour
     // Throw a fatal error, and disable the script so we don't spam errors if something isn't set up right.
     void FatalError(string s)
     {
+        OnError();
+
+        throw new Exception(this + ": " + s);
+    }
+
+    private void OnError()
+    {
         // If Fallback is RenderNothing, remove our layer from the camera's culling mask so it won't be
         // drawn at all.  If we're in RenderWithoutMosaic, leave it on.
         if(Fallback == FallbackMode.RenderNothing)
@@ -222,8 +229,6 @@ public class Mosaix: MonoBehaviour
 
         // Either way, disable this script.
         enabled = false;
-
-        throw new Exception(this + ": " + s);
     }
 
     void OnEnable()
@@ -235,6 +240,16 @@ public class Mosaix: MonoBehaviour
         if(ExpandEdgesShader == null) FatalError("No ExpandEdgesShader is assigned.");
         if(ResizeShader == null) FatalError("No ResizeShader is assigned.");
         if(MosaicMaterial == null) FatalError("No MosaicMaterial is assigned.");
+
+        // Check that all shaders are supported by the GPU.
+        if(!ExpandEdgesShader.isSupported) FatalError("ExpandEdgesShader isn't supported by this GPU.");
+        if(!ResizeShader.isSupported) FatalError("ResizeShader isn't supported by this GPU.");
+
+        // This returns false in 5.1 and 5.3 if the shader has multiple passes, regardless of whether
+        // the shader works.
+#if UNITY_5_5_OR_NEVER
+        if(!MosaicMaterial.shader.isSupported) FatalError("MosaicMaterial isn't supported by this GPU.");
+#endif
 
         // If more than one of these scripts is attached to the same layer on the same camera, our
         // material replacement in OnPreRender and OnPostRender won't behave correctly.  This is
@@ -603,6 +618,16 @@ public class Mosaix: MonoBehaviour
     }
 
     void OnPreRender()
+    {
+        try {
+            OnPreRenderInner();
+        } catch {
+            OnError();
+            throw;
+        }
+    }
+
+    private void OnPreRenderInner()
     {
         // If we're not aligning the mosaic to the transform (but we may be aligning it for scale), save
         // the mosaic alignment now.  This way, when we update the alignment later, we do it relative to now
