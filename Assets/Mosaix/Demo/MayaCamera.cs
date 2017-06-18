@@ -74,17 +74,6 @@ public class MayaCamera: MonoBehaviour
             {
                 MousePosition = Input.mousePosition;
 
-#if !UNITY_WEBGL                
-                // If we have any SkinnedMeshColliders, update them so we can test if the user
-                // clicked on a skinned mesh.
-                //
-                // This is slow on WebGL, so we just use the initial pose for collision, since the
-                // demo model doesn't move enough that updating it again is important.  Unity wants
-                // us to do this by creating a bunch of capsule colliders to approximate the model,
-                // but that's not worth it for this simple demo.
-                SkinnedMeshCollider.UpdateAllColliders();
-#endif
-
                 // Find the object the mouse is over.  If there isn't one, keep the old origin.
                 // Maya actually remembers the distance to the most recent click (centerOfInterest)
                 // and uses that as the distance to the origin if you click on a point that doesn't
