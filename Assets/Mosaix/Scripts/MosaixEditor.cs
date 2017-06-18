@@ -111,6 +111,15 @@ public class MosaixEditor: Editor
         if(obj.EditorSettings.ShowAdvanced)
         {
             ++EditorGUI.indentLevel;
+            obj.Fallback = (Mosaix.FallbackMode) EditorGUILayout.EnumPopup(new GUIContent("On Error",
+                        "Choose what to do if the mosaic can't be rendered because of an unexpected error.\n" +
+                        "\n" +
+                        "Render Nothing will hide the objects.  If we can't mosaic the object, don't render it at all.\n" +
+                        "\n" +
+                        "Render Without Mosaic will simply disable the mosaic."
+                        ),
+                    obj.Fallback);
+
             obj.ShadowsCastOnMosaic = EditorGUILayout.Toggle(new GUIContent("Shadows Cast On Mosaic",
                         "If on (recommended), non-mosaiced objects will cast shadows on mosaiced objects.\n" +
                         "\n" +

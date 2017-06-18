@@ -51,6 +51,12 @@ public class Mosaix: MonoBehaviour
 
     public float Alpha = 1;
 
+    public enum FallbackMode {
+        RenderNothing,
+        RenderWithoutMosaic,
+    };
+    public FallbackMode Fallback = FallbackMode.RenderNothing;
+
     // The number of ExpandEdges passes to perform.  This is normally only changed for debugging.
     // One pass is usually enough, but if we have RenderScale enabled we may need two passes.
     [System.NonSerialized]
@@ -209,7 +215,14 @@ public class Mosaix: MonoBehaviour
     // Throw a fatal error, and disable the script so we don't spam errors if something isn't set up right.
     void FatalError(string s)
     {
+        // If Fallback is RenderNothing, remove our layer from the camera's culling mask so it won't be
+        // drawn at all.  If we're in RenderWithoutMosaic, leave it on.
+        if(Fallback == FallbackMode.RenderNothing)
+            ThisCamera.cullingMask &= ~(1 << MosaicLayer);
+
+        // Either way, disable this script.
         enabled = false;
+
         throw new Exception(this + ": " + s);
     }
 
